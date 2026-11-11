@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatStatus, UIMessage } from "ai";
-import { ArrowDownIcon } from "lucide-react";
+import { ArrowDownIcon, BotIcon, MessageSquareIcon, ShieldCheckIcon } from "lucide-react";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { cn } from "@/lib/utils";
 import { PreviewMessage, ThinkingMessage } from "./message";
@@ -23,8 +23,30 @@ export function Messages({ emptyState = "Ask anything...", messages, status }: M
   return (
     <div className="relative flex-1 bg-background">
       {messages.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <p className="text-lg text-muted-foreground">{emptyState}</p>
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
+          {emptyState === "Ask anything..." ? (
+            <div className="max-w-md text-center fade-up">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
+                <BotIcon className="size-7" />
+              </div>
+              <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                How can Jobbot help today?
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Start a conversation below. If a task needs human approval, you’ll be guided to Reviews to continue safely.
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-2.5 py-1">
+                  <MessageSquareIcon className="size-3.5" /> Conversational help
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-2.5 py-1">
+                  <ShieldCheckIcon className="size-3.5" /> Human-in-the-loop reviews
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">{emptyState}</p>
+          )}
         </div>
       )}
       <div

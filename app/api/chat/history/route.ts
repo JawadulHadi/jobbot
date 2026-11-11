@@ -7,13 +7,18 @@ import {
   readUpstreamError,
   LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE,
 } from "@/lib/agent-engine-api";
+import { withRequestId } from "@/lib/request-id";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const headers = withRequestId();
   const sessionId = new URL(request.url).searchParams.get("session_id")?.trim();
   if (!sessionId || !isSafeSessionId(sessionId)) {
-    return Response.json({ error: "A valid session_id is required." }, { status: 400 });
+    return Response.json(
+      { error: "A valid session_id is required." },
+      { status: 400, headers }
+    );
   }
 
   try {
@@ -30,18 +35,20 @@ export async function GET(request: Request) {
             ? LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE
             : await readUpstreamError(response),
         },
-        { status: response.status }
+        { status: response.status, headers }
       );
     }
 
-    return Response.json(normalizeChatHistory(await response.json(), sessionId));
+    return Response.json(normalizeChatHistory(await response.json(), sessionId), {
+      headers,
+    });
   } catch (error) {
     return Response.json(
       {
         error:
           error instanceof Error ? error.message : "Unable to load conversation history.",
       },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
 }

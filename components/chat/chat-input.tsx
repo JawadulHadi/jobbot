@@ -53,6 +53,7 @@ export function ChatInput({
     >
       <div className="overflow-hidden rounded-2xl border border-border/30 bg-card/70 shadow-[var(--shadow-composer)] transition-shadow duration-300 focus-within:shadow-[var(--shadow-composer-focus)]">
         <textarea
+          aria-label="Message"
           className="field-sizing-content max-h-48 min-h-24 w-full resize-none border-0 bg-transparent px-4 pt-3.5 pb-1.5 text-[13px] leading-relaxed outline-none placeholder:text-muted-foreground/35"
           disabled={disabled}
           onChange={(e) => setInput(e.target.value)}
@@ -72,6 +73,7 @@ export function ChatInput({
         <div className="flex items-center justify-end px-3 pb-3">
           {status === "submitted" || status === "streaming" ? (
             <Button
+              aria-label="Stop generating"
               className="h-7 w-7 rounded-xl bg-foreground p-1 text-background transition-all duration-200 hover:opacity-85 active:scale-95"
               onClick={(e) => {
                 e.preventDefault();
@@ -83,8 +85,9 @@ export function ChatInput({
             </Button>
           ) : (
             <button
+              aria-label="Send message"
               className={cn(
-                "inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all duration-200",
+                "inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all duration-200 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                 input.trim() && !disabled
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                   : "bg-muted text-muted-foreground/25 cursor-not-allowed"

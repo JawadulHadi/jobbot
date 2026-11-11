@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCwIcon, ShieldCheckIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   REVIEW_POLL_INTERVAL_MS,
@@ -13,6 +13,7 @@ import {
   type ResumeReviewRequest,
 } from "@/lib/reviews";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function allowedDecisions(review: PendingReview): string[] {
   const decisions = review.suspend_context?.allowed_decisions;
@@ -311,25 +312,37 @@ export function Reviews() {
   return (
     <main className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 pb-6">
           <div>
-            <Link className="text-sm text-muted-foreground hover:text-foreground" href="/">
+            <Link className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors" href="/">
               ← Back to chat
             </Link>
-            <h1 className="mt-3 text-2xl font-semibold">Human reviews</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {reviews.length} suspended execution{reviews.length === 1 ? "" : "s"} awaiting review.
-            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
+                <ShieldCheckIcon className="size-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">Human reviews</h1>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {loading && reviews.length === 0
+                    ? "Checking for suspended executions…"
+                    : `${reviews.length} suspended execution${reviews.length === 1 ? "" : "s"} awaiting review.`}
+                </p>
+              </div>
+            </div>
           </div>
-          <Button
-            aria-label="Refresh reviews"
-            disabled={loading}
-            onClick={() => void loadReviews(true)}
-            variant="outline"
-          >
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            Refresh
-          </Button>
+          <div className="mt-1 flex items-center gap-2">
+            <ThemeToggle />
+            <Button
+              aria-label="Refresh reviews"
+              disabled={loading}
+              onClick={() => void loadReviews(true)}
+              variant="outline"
+            >
+              <RefreshCwIcon className={`mr-2 size-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
         </header>
 
         {error ? (
@@ -360,10 +373,13 @@ export function Reviews() {
         ) : null}
 
         {!loading && !error && reviews.length === 0 ? (
-          <div className="mt-8 rounded-xl border border-dashed p-8 text-center">
-            <h2 className="font-medium">No pending reviews</h2>
+          <div className="mt-8 rounded-2xl border border-dashed border-border/70 bg-card/30 p-10 text-center">
+            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+              <ShieldCheckIcon className="size-6" />
+            </div>
+            <h2 className="font-medium text-foreground">No pending reviews</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Suspended executions for this workspace will appear here.
+              When an execution is suspended for human input, it will appear here for action.
             </p>
           </div>
         ) : null}
