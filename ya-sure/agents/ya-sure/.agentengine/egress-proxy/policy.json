@@ -1,0 +1,20 @@
+{
+  "aer_mode": "allow_list",
+  "tool_mode": "allow_list",
+  "aer": [
+    {
+      "fqdn": "api.openai.com",
+      "ports": [
+        443
+      ]
+    }
+  ],
+  "tool": [
+    {
+      "fqdn": "api.openai.com",
+      "ports": [
+        443
+      ]
+    }
+  ]
+}

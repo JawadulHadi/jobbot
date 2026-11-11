@@ -1,0 +1,4 @@
+2026/11/11 17:53:12 local egress proxy starting (agent sandbox allow_list (api.openai.com:443); tool sandbox allow_list (api.openai.com:443))
+2026/11/11 17:53:12 HTTP(S)_PROXY only: clients that ignore the proxy are not blocked
+2026/11/11 17:53:12 agent sandbox [::]:64392 tool sandbox [::]:64393
+2026/11/11 20:38:35 local egress proxy stopping
