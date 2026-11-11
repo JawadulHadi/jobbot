@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useChat } from "@ai-sdk/react";
-import { DicesIcon } from "lucide-react";
+import { BotIcon, DicesIcon, ShieldCheckIcon } from "lucide-react";
 import Link from "next/link";
 import { generateUUID } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/session";
 import { Messages } from "./messages";
 import { ChatInput } from "./chat-input";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const SESSION_POLL_INTERVAL_MS = 3_000;
 
@@ -143,6 +144,7 @@ export function Chat() {
   const [isRestoring, setIsRestoring] = useState(true);
   const [progress, setProgress] = useState<SessionProgress>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [configNotice, setConfigNotice] = useState<string | null>(null);
   const historyRequest = useRef<AbortController | null>(null);
   const initialSession = useRef<{ id: string; restore: boolean } | null>(null);
 
@@ -244,12 +246,62 @@ export function Chat() {
   useEffect(() => {
     if (!progress || !sessionId || isRestoring) return;
 
-    const timer = window.setInterval(
-      () => void restoreSession(sessionId, false),
-      SESSION_POLL_INTERVAL_MS
-    );
-    return () => window.clearInterval(timer);
+    let timer: number | null = null;
+
+    const tick = () => {
+      if (document.visibilityState === "hidden") return;
+      void restoreSession(sessionId, false);
+    };
+
+    const start = () => {
+      if (timer !== null) window.clearInterval(timer);
+      timer = window.setInterval(tick, SESSION_POLL_INTERVAL_MS);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void restoreSession(sessionId, false);
+      }
+    };
+
+    start();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      if (timer !== null) window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [isRestoring, progress, restoreSession, sessionId]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "test") return;
+    let active = true;
+    void fetch("/api/health", { cache: "no-store" })
+      .then(async (response) => {
+        const body = (await response.json().catch(() => null)) as
+          | { configured?: boolean; ok?: boolean; error?: string; message?: string }
+          | null;
+        if (!active) return;
+        if (!body) return;
+        if (body.configured === false) {
+          setConfigNotice(
+            body.message ||
+              "Backend not configured. Set MONGODB_AGENTIC_API_URL (and credentials for deployed endpoints) to enable chat and reviews."
+          );
+          return;
+        }
+        if (body.ok === false && body.error) {
+          setConfigNotice(`Configuration issue: ${body.error}`);
+          return;
+        }
+        setConfigNotice(null);
+      })
+      .catch(() => {
+        if (active) setConfigNotice(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const applySessionInput = useCallback(() => {
     const nextSessionId = sessionInput.trim();
@@ -303,22 +355,39 @@ export function Chat() {
   return (
     <div className="flex h-dvh w-full flex-col bg-background">
       <header className="sticky top-0 z-10 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-2 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-sm font-semibold tracking-tight text-foreground">
-              Jobbot
-            </h1>
-            <Link className="text-sm text-muted-foreground hover:text-foreground" href="/reviews">
-              Reviews
-            </Link>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand)] text-[var(--brand-foreground)] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+                <BotIcon className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-sm font-semibold tracking-tight text-foreground">
+                  Jobbot
+                </h1>
+                <p className="truncate text-xs text-muted-foreground">
+                  AI assistant with human review, powered by Atlas Agent Engine
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
+                href="/reviews"
+              >
+                <ShieldCheckIcon className="size-3.5 text-[var(--brand)]" />
+                Reviews
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/40 bg-card/40 px-3 py-2">
             <div className="flex items-center gap-2">
               <label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor="user-id">
-                User ID
+                User
               </label>
               <Input
-                className="h-7 w-40 text-xs"
+                className="h-8 w-36 text-xs bg-background/60"
                 id="user-id"
                 onChange={(e) => setUserId(e.target.value)}
                 value={userId}
@@ -328,16 +397,18 @@ export function Chat() {
                 onClick={() => setUserId(`user-${generateUUID().slice(0, 8)}`)}
                 size="icon-xs"
                 variant="outline"
+                className="h-8 w-8"
               >
                 <DicesIcon className="size-3.5" />
               </Button>
             </div>
+            <div className="h-4 w-px bg-border/60 hidden sm:block" aria-hidden="true" />
             <div className="flex items-center gap-2">
               <label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor="session-id">
-                Session ID
+                Session
               </label>
               <Input
-                className="h-7 w-56 text-xs font-mono"
+                className="h-8 w-52 text-xs font-mono bg-background/60"
                 id="session-id"
                 onBlur={applySessionInput}
                 onChange={(event) => {
@@ -354,6 +425,7 @@ export function Chat() {
                 onClick={startNewSession}
                 size="icon-xs"
                 variant="outline"
+                className="h-8 w-8"
               >
                 <DicesIcon className="size-3.5" />
               </Button>
@@ -374,6 +446,19 @@ export function Chat() {
       />
       <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
         <div className="w-full">
+          {configNotice ? (
+            <div
+              className="mb-2 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/5 px-3 py-2 text-sm text-foreground"
+              role="status"
+            >
+              <p className="font-medium text-[var(--brand)]">Setup needed</p>
+              <p className="mt-0.5 text-muted-foreground">{configNotice}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Check <code className="font-mono">/api/health</code> and update{" "}
+                <code className="font-mono">.env.local</code> as described in README.
+              </p>
+            </div>
+          ) : null}
           {historyError ? (
             <p className="mb-2 text-sm text-destructive" role="alert">
               {historyError}

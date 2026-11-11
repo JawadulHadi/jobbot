@@ -6,6 +6,7 @@ import { generateUUID } from "@/lib/utils";
 import { getAgentEngineHeaders } from "@/lib/agent-engine-auth";
 import { getAgentEngineTarget, isSafeSessionId } from "@/lib/agent-engine-api";
 import { SUSPENDED_CHAT_RESPONSE } from "@/lib/session";
+import { createRequestId } from "@/lib/request-id";
 
 export const maxDuration = 60;
 
@@ -45,7 +46,7 @@ function parseAgentEngineStreamEvent(raw: string): AgentEngineStreamEvent | null
   }
 }
 
-function streamErrorMessage(text: string) {
+function streamErrorMessage(text: string, requestId?: string) {
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       const partId = generateUUID();
@@ -54,7 +55,10 @@ function streamErrorMessage(text: string) {
       writer.write({ type: "text-end", id: partId });
     },
   });
-  return createUIMessageStreamResponse({ stream });
+  return createUIMessageStreamResponse({
+    stream,
+    ...(requestId ? { headers: { "X-Request-Id": requestId } } : {}),
+  });
 }
 
 async function fetchWithRetry(
@@ -75,12 +79,16 @@ async function fetchWithRetry(
 }
 
 export async function POST(request: Request) {
+  const requestId = createRequestId();
   let body: Record<string, unknown>;
 
   try {
     body = await request.json();
   } catch {
-    return new Response("Invalid request body", { status: 400 });
+    return new Response("Invalid request body", {
+      status: 400,
+      headers: { "X-Request-Id": requestId },
+    });
   }
 
   const messages = body.messages as
@@ -98,7 +106,10 @@ export async function POST(request: Request) {
       .join("") ?? "";
 
   if (!userText.trim()) {
-    return new Response("No message provided", { status: 400 });
+    return new Response("No message provided", {
+      status: 400,
+      headers: { "X-Request-Id": requestId },
+    });
   }
 
   const userId = typeof body.user_id === "string" ? body.user_id : undefined;
@@ -120,7 +131,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return new Response(
       error instanceof Error ? error.message : "Invalid Agent Engine API configuration.",
-      { status: 500 }
+      { status: 500, headers: { "X-Request-Id": requestId } }
     );
   }
 
@@ -139,14 +150,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Agent Engine API network error:", error);
     return streamErrorMessage(
-      "Sorry, we couldn't reach the server. Please check your connection and try again."
+      "Sorry, we couldn't reach the server. Please check your connection and try again.",
+      requestId
     );
   }
 
   if (!mongoResponse.ok || !mongoResponse.body) {
     console.error("Agent Engine API error:", mongoResponse.status);
     return streamErrorMessage(
-      "Unfortunately, something went wrong while processing your request. Please try again."
+      "Unfortunately, something went wrong while processing your request. Please try again.",
+      requestId
     );
   }
 
@@ -234,5 +247,8 @@ export async function POST(request: Request) {
     },
   });
 
-  return createUIMessageStreamResponse({ stream });
+  return createUIMessageStreamResponse({
+    stream,
+    headers: { "X-Request-Id": requestId },
+  });
 }

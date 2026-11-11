@@ -8,6 +8,7 @@ import {
   LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE,
 } from "@/lib/agent-engine-api";
 import { isRecord, type ResumeReviewRequest } from "@/lib/reviews";
+import { withRequestId } from "@/lib/request-id";
 
 const MAX_REVIEWER_NOTES_LENGTH = 4_000;
 const RESUME_INPUT_INVALID_CODE = "RESUME_INPUT_INVALID";
@@ -59,14 +60,15 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ executionId: string }> }
 ) {
+  const headers = withRequestId();
   const { executionId } = await params;
   if (!isSafeExecutionId(executionId)) {
-    return Response.json({ error: "Invalid execution ID." }, { status: 400 });
+    return Response.json({ error: "Invalid execution ID." }, { status: 400, headers });
   }
 
   const body = parseResumeRequest(await request.json().catch(() => null));
   if (!body) {
-    return Response.json({ error: "Invalid resume request." }, { status: 400 });
+    return Response.json({ error: "Invalid resume request." }, { status: 400, headers });
   }
 
   try {
@@ -100,22 +102,22 @@ export async function POST(
       if (body.type === "decision" && isLocalReviewApiMissing(target, response)) {
         return Response.json(
           { error: LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE },
-          { status: response.status }
+          { status: response.status, headers }
         );
       }
       const upstreamError = await readUpstreamErrorDetails(response);
       return Response.json(
         { error: actionableResumeError(upstreamError.message, upstreamError.code) },
-        { status: response.status }
+        { status: response.status, headers }
       );
     }
 
     const result = await response.json().catch(() => ({}));
-    return Response.json({ success: true, result });
+    return Response.json({ success: true, result }, { headers });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : "Unable to resume review." },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
 }

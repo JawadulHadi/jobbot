@@ -56,7 +56,7 @@ describe("Chat", () => {
       });
     });
 
-    expect(screen.getByLabelText("Session ID")).toHaveValue("authoritative-session");
+    expect(screen.getByLabelText("Session")).toHaveValue("authoritative-session");
     expect(window.localStorage.getItem(CHAT_SESSION_STORAGE_KEY)).toBe(
       "authoritative-session"
     );
@@ -96,7 +96,7 @@ describe("Chat", () => {
 
     render(<Chat />);
 
-    expect(screen.getByRole("textbox", { name: "Session ID" })).toHaveValue(
+    expect(screen.getByRole("textbox", { name: "Session" })).toHaveValue(
       "persisted-session"
     );
     expect(screen.getByPlaceholderText("Loading conversation...")).toBeDisabled();
@@ -201,7 +201,7 @@ describe("Chat", () => {
         expect.objectContaining({ cache: "no-store" })
       );
     });
-    expect(screen.getByLabelText("Session ID")).toHaveValue("reviewed-session");
+    expect(screen.getByLabelText("Session")).toHaveValue("reviewed-session");
     expect(window.localStorage.getItem(CHAT_SESSION_STORAGE_KEY)).toBe(
       "reviewed-session"
     );

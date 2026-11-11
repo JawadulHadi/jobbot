@@ -13,8 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jobbot",
-  description: "AI chatbot and human-review workspace powered by Atlas Agent Engine",
+  title: {
+    default: "Jobbot",
+    template: "%s | Jobbot",
+  },
+  description:
+    "Jobbot is an AI assistant with human-in-the-loop reviews, powered by Atlas Agent Engine.",
+  applicationName: "Jobbot",
 };
 
 export default function RootLayout({
@@ -33,15 +38,25 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                  document.documentElement.classList.add('dark');
-                }
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored === 'dark' || (stored !== 'light' && prefersDark);
+                if (dark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
               } catch (e) {}
             `,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-lg focus:ring-2 focus:ring-ring"
+        >
+          Skip to main content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }
