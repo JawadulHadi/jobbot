@@ -11,13 +11,59 @@ function Invoke-GH([string[]]$GhArgs) {
     return $null
   }
   $out = & gh @GhArgs 2>&1
-  if ($LASTEXITCODE -ne 0) { throw ($out | Out-String) }
+  if ($LASTEXITCODE -ne 0) { throw (($out | Out-String).TrimEnd()) }
   return $out
+}
+
+function Invoke-GHJson([string[]]$GhArgs) {
+  $out = & gh @GhArgs 2>&1
+  $text = ($out | Out-String)
+  if ($LASTEXITCODE -ne 0) {
+    throw "gh $($GhArgs -join ' ') failed: $text"
+  }
+  try {
+    if ([string]::IsNullOrWhiteSpace($text)) { return $null }
+    return $text | ConvertFrom-Json
+  } catch {
+    throw "gh $($GhArgs -join ' ') returned invalid JSON: $text"
+  }
+}
+
+function Get-AllMilestones([string]$TargetRepo) {
+  $items = Invoke-GHJson @("api", "repos/$TargetRepo/milestones?state=all&per_page=100", "--paginate")
+  if ($null -eq $items) { return @() }
+  if ($items -isnot [System.Array]) { return @($items) }
+  return @($items)
+}
+
+function Get-AllLabels([string]$TargetRepo) {
+  $items = Invoke-GHJson @("label", "list", "--repo", $TargetRepo, "--limit", "100", "--json", "name,color,description", "--search", "")
+  # gh label list supports --limit but not pagination; fetch in pages via API instead for completeness
+  $items = Invoke-GHJson @("api", "repos/$TargetRepo/labels?per_page=100", "--paginate")
+  if ($null -eq $items) { return @() }
+  if ($items -isnot [System.Array]) { return @($items) }
+  return @($items)
+}
+
+function Get-MilestoneByTitle([object[]]$Milestones, [string]$Title) {
+  $norm = { param($s) (([string]$s) -replace '[\u2012\u2013\u2014\u2015]', '-' -replace '\s+', ' ').Trim() }
+  $want = & $norm $Title
+  $found = $Milestones | Where-Object { (& $norm $_.title) -eq $want } | Select-Object -First 1
+  if ($found) { return $found }
+  # Fallback: match by canonical key phrases to tolerate encoding/punctuation differences.
+  $keys = @("Phase A", "Phase B", "Phase C", "Release & Governance", "Hotfix / Patch")
+  foreach ($k in $keys) {
+    if ($want -like "*$k*") {
+      $found = $Milestones | Where-Object { (& $norm $_.title) -like "*$k*" } | Select-Object -First 1
+      if ($found) { return $found }
+    }
+  }
+  return $null
 }
 
 Write-Host "Configuring GitHub metadata for $Repo"
 
-# Milestones (create if missing by title)
+# Milestones (create or update; race-safe recheck before create)
 $desiredMilestones = @(
   @{ title = "Phase A — Brand & UI Polish"; description = "Cohesive branded UI without core behavior changes. Tokens/theme, icon/metadata, copy, a11y baseline, visual QA. Exit: theming complete, a11y/visual QA satisfied, docs/validation recorded." },
   @{ title = "Phase B — Strengthen Existing Implementations"; description = "Reliability, UX hardening, maintainability. Error mapping, polling/backoff, reviews UX, tests/CI, request tracing. Exit: hardened flows, expanded coverage/CI, documented validation." },
@@ -26,18 +72,46 @@ $desiredMilestones = @(
   @{ title = "Hotfix / Patch"; description = "Urgent corrective releases. Targeted fixes + regression validation. Exit: patch released/tagged with notes and verification." }
 )
 
-$existingMilestones = gh api "repos/$Repo/milestones?state=all&per_page=100" | ConvertFrom-Json
+$existingMilestones = Get-AllMilestones $Repo
 foreach ($m in $desiredMilestones) {
-  $found = $existingMilestones | Where-Object { $_.title -eq $m.title }
+  $existingMilestones = Get-AllMilestones $Repo
+  $found = Get-MilestoneByTitle $existingMilestones $m.title
   if ($found) {
-    Write-Host "Milestone exists: $($m.title)"
+    $currentDesc = if ($null -eq $found.description) { "" } else { [string]$found.description }
+    if ($currentDesc -ne $m.description) {
+      Write-Host "Updating milestone: $($m.title)"
+      Invoke-GH @("api", "--method", "PATCH", "repos/$Repo/milestones/$($found.number)", "-f", "description=$($m.description)") | Out-Null
+    } else {
+      Write-Host "Milestone up to date: $($m.title)"
+    }
   } else {
     Write-Host "Creating milestone: $($m.title)"
-    Invoke-GH @("api", "repos/$Repo/milestones", "-f", "title=$($m.title)", "-f", "description=$($m.description)") | Out-Null
+    if ($DryRun) {
+      Write-Host "[dry-run] gh api repos/$Repo/milestones -f title=$($m.title) -f description=<desired>"
+      continue
+    }
+    $createOut = & gh api "repos/$Repo/milestones" -f "title=$($m.title)" -f "description=$($m.description)" 2>&1
+    $createText = ($createOut | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+      # Race: recheck before failing; if now exists, update description to desired and continue.
+      $recheck = Get-AllMilestones $Repo
+      $after = Get-MilestoneByTitle $recheck $m.title
+      if ($after) {
+        $currentDesc = if ($null -eq $after.description) { "" } else { [string]$after.description }
+        if ($currentDesc -ne $m.description) {
+          Write-Host "Updating milestone after concurrent create: $($m.title)"
+          Invoke-GH @("api", "--method", "PATCH", "repos/$Repo/milestones/$($after.number)", "-f", "description=$($m.description)") | Out-Null
+        } else {
+          Write-Host "Milestone exists after concurrent create: $($m.title)"
+        }
+      } else {
+        throw "Failed to create milestone '$($m.title)': $createText"
+      }
+    }
   }
 }
 
-# Labels (create or update)
+# Labels (create or update; race-safe on create)
 $desiredLabels = @(
   @{ name="phase:a"; color="766a03"; description="Phase/milestone alignment" },
   @{ name="phase:b"; color="081c8e"; description="Phase/milestone alignment" },
@@ -60,15 +134,29 @@ $desiredLabels = @(
   @{ name="security"; color="ee0701"; description="Security-sensitive change" }
 )
 
-$existingLabels = gh label list --repo $Repo --limit 200 --json name | ConvertFrom-Json
-$existingNames = @($existingLabels | ForEach-Object { $_.name })
 foreach ($l in $desiredLabels) {
-  if ($existingNames -contains $l.name) {
+  $existingLabels = Get-AllLabels $Repo
+  $found = $existingLabels | Where-Object { $_.name -eq $l.name } | Select-Object -First 1
+  if ($found) {
     Write-Host "Updating label: $($l.name)"
     Invoke-GH @("label", "edit", $l.name, "--repo", $Repo, "--color", $l.color, "--description", $l.description) | Out-Null
   } else {
     Write-Host "Creating label: $($l.name)"
-    Invoke-GH @("label", "create", $l.name, "--repo", $Repo, "--color", $l.color, "--description", $l.description) | Out-Null
+    if ($DryRun) {
+      Write-Host "[dry-run] gh label create $($l.name) --repo $Repo --color $($l.color) --description <desired>"
+      continue
+    }
+    $createOut = & gh label create $l.name --repo $Repo --color $l.color --description $l.description 2>&1
+    $createText = ($createOut | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+      # Concurrent create or existing: treat as update instead of aborting.
+      if ($createText -match 'already exists') {
+        Write-Host "Label exists after concurrent create, updating: $($l.name)"
+        Invoke-GH @("label", "edit", $l.name, "--repo", $Repo, "--color", $l.color, "--description", $l.description) | Out-Null
+      } else {
+        throw "Failed to create label '$($l.name)': $createText"
+      }
+    }
   }
 }
 
@@ -78,11 +166,12 @@ $topics = @("nextjs","react","typescript","chatbot","ai-assistant","atlas-agent-
 
 Write-Host "Updating repository description/topics"
 if (-not $DryRun) {
-  gh api --method PATCH "repos/$Repo" -f description="$desc" | Out-Null
+  & gh api --method PATCH "repos/$Repo" -f "description=$desc" 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "Failed to update repository description" }
   $topicArgs = @("api", "--method", "PUT", "repos/$Repo/topics", "-H", "Accept: application/vnd.github+json")
   foreach ($t in $topics) { $topicArgs += @("-f", "names[]=$t") }
-  & gh @topicArgs | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "Failed to update topics" }
+  & gh @topicArgs 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "Failed to update repository topics" }
 } else {
   Write-Host "[dry-run] update description/topics"
 }
