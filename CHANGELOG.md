@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Visibility-aware polling for suspended/resuming chat sessions and reviews queue refresh.
 - Comprehensive phase/roadmap documentation: `docs/BRAND_AND_ROADMAP.md`, `docs/phases/PHASE_A.md`, `docs/phases/PHASE_B.md`, `docs/phases/PHASE_C.md`.
 - GitHub metadata automation script and tests: `scripts/setup-github-metadata.ps1`, `scripts/setup-github-metadata.test.ts` (milestones/labels/description/topics).
-- Expanded automated coverage (B8+): proxy and health route tests, api-errors/fetch-retry unit tests, and expanded chat streaming/history/reviews route and edge-case tests (including additional chat streaming fallback/ID-safety cases).
+- Expanded automated coverage (B8+): proxy and health route tests, api-errors/fetch-retry unit tests, and expanded chat streaming/history/reviews route and edge-case tests (including additional chat streaming fallback/ID-safety and reviews API config/malformed-payload cases).
 - Reviews prioritization/audit/outcome tracking (B9/B10): wait-age badges and waiting-based sorting, per-card audit/status context, and recent outcome log with lightweight browser-local persistence across reloads.
 
 ### Changed
@@ -38,7 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Validation (latest recorded)
 - `pnpm lint` — pass (latest increment)
 - `pnpm build` — pass (latest increment)
-- Targeted tests (latest follow-up increment): `app/api/chat/route.test.ts` **9/9** pass
+- Targeted tests (latest follow-up increments): `app/api/chat/route.test.ts` **9/9** pass, `app/api/reviews/route.test.ts` **7/7** pass
 - PR CI: PR #9/#10/#11/#12 merged to `main`; latest CI on `main`/open PRs should be checked before merge
 - Manual keyboard-only, screen-reader, responsive visual QA and live-backend end-to-end QA remain pending; backend-persisted review audit history remains Phase C-blocked.
 
