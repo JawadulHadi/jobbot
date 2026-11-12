@@ -242,4 +242,48 @@ describe("Reviews", () => {
     expect(await within(card).findByRole("alert")).toHaveTextContent("Resume rejected");
     expect(screen.getByText("Approve the refund")).toBeVisible();
   });
+
+  it("shows prioritization/audit cues and tracks recent outcomes after resolution", async () => {
+    const now = Date.now();
+    const older = {
+      ...decisionReview,
+      execution_id: "execution-older",
+      created_at: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date(now - 3 * 60 * 60 * 1000).toISOString(),
+      suspend_context: { summary: "Older review", allowed_decisions: ["approve", "reject"] },
+    };
+    const newer = {
+      ...decisionReview,
+      execution_id: "execution-newer",
+      session_id: "session-newer",
+      created_at: new Date(now - 10 * 60 * 1000).toISOString(),
+      updated_at: new Date(now - 10 * 60 * 1000).toISOString(),
+      suspend_context: { summary: "Newer review", allowed_decisions: ["approve", "reject"] },
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ reviews: [newer, older], count: 2 }))
+      .mockResolvedValueOnce(response({ success: true }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<Reviews />);
+
+    expect(await screen.findByText("Older review")).toBeVisible();
+    const sort = screen.getByLabelText("Sort reviews") as HTMLSelectElement;
+    expect(sort.value).toBe("waiting_desc");
+    expect(within(sort).getByRole("option", { name: "Waiting (longest first)" })).toBeInTheDocument();
+
+    const cards = screen.getAllByRole("article");
+    expect(within(cards[0]).getByText("Older review")).toBeInTheDocument();
+    expect(within(cards[0]).getByText(/Waiting /)).toBeInTheDocument();
+    expect(within(cards[0]).getByText(/Status: suspended/)).toBeInTheDocument();
+    expect(within(cards[0]).getByText(/decision review/)).toBeInTheDocument();
+
+    await user.click(within(cards[0]).getByRole("button", { name: "Submit decision" }));
+
+    expect(await screen.findByRole("heading", { name: "Recent outcomes (this session)" })).toBeVisible();
+    expect(screen.getByText("Decision: approve")).toBeVisible();
+    expect(screen.getByText(/execution-older/)).toBeVisible();
+  });
 });

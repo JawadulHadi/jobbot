@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Comprehensive phase/roadmap documentation: `docs/BRAND_AND_ROADMAP.md`, `docs/phases/PHASE_A.md`, `docs/phases/PHASE_B.md`, `docs/phases/PHASE_C.md`.
 - Expanded automated coverage: proxy and health route tests, api-errors/fetch-retry unit tests, and additional chat streaming/history/reviews route tests.
 - GitHub metadata automation script and tests: `scripts/setup-github-metadata.ps1`, `scripts/setup-github-metadata.test.ts` (milestones/labels/description/topics).
+- Reviews prioritization/audit/outcome tracking: wait-age badges and waiting-based sorting, per-card audit/status context, and in-session recent outcome log for resolved reviews.
 
 ### Changed
 - Chat and reviews UI/UX refinements (copy, status/helper text, timestamps, layout polish) while preserving core behavior and API contracts.

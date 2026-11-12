@@ -116,4 +116,4 @@
 
 - Next increments: deeper reviews prioritization/audit/outcome tracking, further streaming/history/reviews edge-case and proxy-integration coverage, and continued CI/reliability tuning.
 - Atlas Agent naming standardized in-repo (`atlas-agent/agents/atlas-agent/`); confirm external/backend labels match if applicable.
-- No deployment/push without approval.
+- No deployment/push/tag/release/merge without explicit approval.

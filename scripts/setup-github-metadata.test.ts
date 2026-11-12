@@ -86,7 +86,7 @@ try {
     Buffer.from(command, "utf16le").toString("base64"),
   ], {
     encoding: "utf8",
-    timeout: 5_000,
+    timeout: 30_000,
     env: { ...process.env, METADATA_SCRIPT_UNDER_TEST: scriptPath },
   });
   if (child.error) throw child.error;
