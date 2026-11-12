@@ -5,6 +5,7 @@ import {
 import { generateUUID } from "@/lib/utils";
 import { getAgentEngineHeaders } from "@/lib/agent-engine-auth";
 import { getAgentEngineTarget, isSafeSessionId } from "@/lib/agent-engine-api";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 import { SUSPENDED_CHAT_RESPONSE } from "@/lib/session";
 import { createRequestId } from "@/lib/request-id";
 
@@ -61,22 +62,7 @@ function streamErrorMessage(text: string, requestId?: string) {
   });
 }
 
-async function fetchWithRetry(
-  url: string | URL,
-  init: RequestInit,
-  { retries = 2, baseDelay = 500 } = {}
-): Promise<Response> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      const response = await fetch(url, init);
-      if (response.ok || response.status < 500 || attempt >= retries)
-        return response;
-    } catch (error) {
-      if (attempt >= retries) throw error;
-    }
-    await new Promise((r) => setTimeout(r, baseDelay * 2 ** attempt));
-  }
-}
+
 
 export async function POST(request: Request) {
   const requestId = createRequestId();

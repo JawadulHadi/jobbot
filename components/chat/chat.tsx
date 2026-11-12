@@ -150,6 +150,7 @@ export function Chat() {
   const [configNotice, setConfigNotice] = useState<string | null>(null);
   const historyRequest = useRef<AbortController | null>(null);
   const initialSession = useRef<{ id: string; restore: boolean } | null>(null);
+  const pollFailureCount = useRef(0);
 
   const [transport] = useState(
     () =>
@@ -186,7 +187,7 @@ export function Chat() {
   });
 
   const restoreSession = useCallback(
-    async (nextSessionId: string, foreground = true) => {
+    async (nextSessionId: string, foreground = true): Promise<boolean> => {
       historyRequest.current?.abort();
       const controller = new AbortController();
       historyRequest.current = controller;
@@ -195,6 +196,7 @@ export function Chat() {
         setHistoryError(null);
       }
 
+      let ok = false;
       try {
         const history = await fetchChatHistory(
           nextSessionId,
@@ -204,15 +206,21 @@ export function Chat() {
           setMessages(toUIMessages(history, nextSessionId));
           setProgress(sessionProgress(history));
           setHistoryError(null);
+          pollFailureCount.current = 0;
+          ok = true;
         }
       } catch (error) {
-        if (!controller.signal.aborted && !isAbortError(error) && foreground) {
-          setMessages([]);
-          const message = normalizeApiErrorMessage(
-            error,
-            "Unable to load conversation history."
-          );
-          setHistoryError(`${message} You can continue with this session.`);
+        if (!controller.signal.aborted && !isAbortError(error)) {
+          if (foreground) {
+            setMessages([]);
+            const message = normalizeApiErrorMessage(
+              error,
+              "Unable to load conversation history."
+            );
+            setHistoryError(`${message} You can continue with this session.`);
+          } else {
+            pollFailureCount.current += 1;
+          }
         }
       } finally {
         if (historyRequest.current === controller) {
@@ -220,6 +228,7 @@ export function Chat() {
           if (foreground) setIsRestoring(false);
         }
       }
+      return ok;
     },
     [setMessages]
   );
@@ -249,28 +258,40 @@ export function Chat() {
   useEffect(() => {
     if (!progress || !sessionId || isRestoring) return;
 
-    let timer: number | null = null;
+    let stopped = false;
+    let timer: number | undefined;
 
-    const tick = () => {
-      if (document.visibilityState === "hidden") return;
-      void restoreSession(sessionId, false);
+    const nextDelay = () => {
+      const failures = pollFailureCount.current;
+      if (failures <= 0) return SESSION_POLL_INTERVAL_MS;
+      return Math.min(
+        SESSION_POLL_INTERVAL_MS * 2 ** Math.min(failures, 4),
+        60_000
+      );
     };
 
-    const start = () => {
-      if (timer !== null) window.clearInterval(timer);
-      timer = window.setInterval(tick, SESSION_POLL_INTERVAL_MS);
+    const schedule = () => {
+      if (stopped) return;
+      timer = window.setTimeout(async () => {
+        if (!stopped && document.visibilityState !== "hidden") {
+          await restoreSession(sessionId, false);
+        }
+        schedule();
+      }, nextDelay());
     };
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void restoreSession(sessionId, false);
-      }
+      if (stopped || document.visibilityState !== "visible") return;
+      pollFailureCount.current = 0;
+      void restoreSession(sessionId, false);
     };
 
-    start();
+    pollFailureCount.current = 0;
+    schedule();
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      if (timer !== null) window.clearInterval(timer);
+      stopped = true;
+      if (timer !== undefined) window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [isRestoring, progress, restoreSession, sessionId]);
@@ -329,6 +350,7 @@ export function Chat() {
   const startNewSession = useCallback(() => {
     historyRequest.current?.abort();
     historyRequest.current = null;
+    pollFailureCount.current = 0;
     const nextSessionId = generateUUID();
     setSessionId(nextSessionId);
     setSessionInput(nextSessionId);

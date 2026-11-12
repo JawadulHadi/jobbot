@@ -124,11 +124,15 @@ describe("Chat", () => {
 
   it("polls a suspended session until the resumed result appears", async () => {
     window.localStorage.setItem(CHAT_SESSION_STORAGE_KEY, "suspended-session");
-    let poll: (() => void) | undefined;
-    vi.spyOn(window, "setInterval").mockImplementation((handler) => {
-      poll = handler as () => void;
-      return 1 as unknown as ReturnType<typeof window.setInterval>;
-    });
+    let poll: (() => void | Promise<void>) | undefined;
+    const originalSetTimeout = window.setTimeout.bind(window);
+    vi.spyOn(window, "setTimeout").mockImplementation(((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+      if (typeof handler === "function" && timeout === 3000) {
+        poll = handler as () => void | Promise<void>;
+        return 1 as unknown as ReturnType<typeof window.setTimeout>;
+      }
+      return originalSetTimeout(handler, timeout, ...(args as []));
+    }) as typeof window.setTimeout);
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -162,7 +166,9 @@ describe("Chat", () => {
     );
     expect(poll).toBeDefined();
 
-    act(() => poll?.());
+    await act(async () => {
+      await poll?.();
+    });
 
     await waitFor(() => {
       expect(setMessages).toHaveBeenLastCalledWith([
