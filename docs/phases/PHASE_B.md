@@ -10,8 +10,8 @@
 
 - [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in chat/reviews client flows and JSON API route catch paths for normalized user-friendly network/timeout fallback messages; shared `fetchWithRetry` added for history/reviews/resume upstream calls. Further route error-shape/status standardization and chat streaming error contract refinements pending).
 - [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews and chat session background polling now use exponential backoff on consecutive failures (capped) with reset on success/visibility/manual actions. Deeper restore/history edge cases pending.
-- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sort, clearer submission/success/filter-empty states; further prioritization/audit cues pending).
-- [~] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI — progressed (added proxy/health route tests, api-errors/fetch-retry unit tests, and expanded chat streaming/history/reviews route coverage; CI workflow and Vitest config hardened). Further end-to-end/edge-case coverage pending.
+- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, wait-time prioritization/sort options, audit/status context, clearer submission/success/filter-empty states, and recent outcome tracking with browser-local persistence; deeper ops/persistence/audit history pending).
+- [~] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI — progressed (B8 added proxy/health, api-errors/fetch-retry, and expanded route coverage; B9/B10 added reviews prioritization/audit/outcome coverage and additional edge-case tests/CI tuning). Further streaming/history/proxy integration-like coverage pending.
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` headers added.
 
 ## Parallel workstreams
@@ -112,8 +112,31 @@
   - Hardened CI workflow with read-only permissions and concurrency cancellation; tightened Vitest discovery with explicit include/exclude patterns.
 - **Validation:** `pnpm lint` pass; `pnpm build` pass. Targeted tests for changed/new suites passed (36/36 across 8 files). Full `pnpm test` run in this environment reported unrelated `scripts/setup-github-metadata.test.ts` pwsh timeouts and one transient `components/reviews/reviews.test.tsx` timeout under load (re-run of reviews suite passed: 7/7).
 
+### B9. Reviews prioritization, audit cues, and outcome tracking — 2026-11-12
+
+- **Files:** `components/reviews/reviews.tsx`, `components/reviews/reviews.test.tsx`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:**
+  - Added wait-age prioritization cues and sorting: "Waiting (longest/newest first)" sort options (default longest first), per-card waiting-age badge, and wait-time-aware ordering.
+  - Added audit/context metadata in review cards (status/interrupt-vs-decision context) and refined timestamp labeling for clearer review state.
+  - Added in-session "Recent outcomes" tracking/log for resolved reviews (action, execution/session, reason, timestamp) to improve operator feedback after submissions.
+  - Extended reviews tests to cover prioritization/sort default, audit cues, and outcome tracking while preserving existing decision/interrupt/resume behaviors.
+- **Validation:** targeted reviews tests passed (8/8); lint/build passed for the increment.
+
+### B10. Follow-up: outcome persistence, edge-case coverage, and CI/a11y tuning — 2026-11-12
+
+- **Files:** `components/reviews/reviews.tsx`, `components/chat/messages.tsx`, `proxy.test.ts`, `app/api/health/route.test.ts`, `app/api/chat/history/route.test.ts`, `app/api/reviews/[executionId]/resume/route.test.ts`, `lib/api-errors.test.ts`, `lib/fetch-with-retry.test.ts`, `scripts/setup-github-metadata.test.ts`, `docs/phases/PHASE_A.md`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:**
+  - Added lightweight client-side persistence for reviews recent outcomes via `localStorage` (browser-local audit/ops continuity across reloads; no backend persistence/authz changes).
+  - Added/expanded proxy, health, api-errors/fetch-with-retry, and history/reviews-resume edge-case coverage.
+  - Increased `scripts/setup-github-metadata.test.ts` pwsh spawn timeout to improve CI/local stability; added minor chat empty-state decorative icon a11y fixes (`aria-hidden`).
+- **Validation:** `pnpm lint` pass, `pnpm build` pass. Targeted suites passed in batched runs due local Vitest pool startup flakiness: proxy/health/api-errors/fetch-with-retry 17/17, history/resume/reviews 25/25. PR #10 latest pushed commit has passing `quality` and CodeQL/security checks.
+- **Notes:** Backend-persisted review audit/outcome storage and richer ops reporting remain Phase C-scoped (authz/storage/observability approvals required). Full manual keyboard/screen-reader/responsive QA remains pending. No deploy/tag/release/merge without explicit approval.
+
 ## Open items / blockers
 
-- Next increments: deeper reviews prioritization/audit/outcome tracking, further streaming/history/reviews edge-case and proxy-integration coverage, and continued CI/reliability tuning.
+- **PR #9:** merged into `main` (B8 tests/CI hardening baseline).
+- **PR #10 (open):** https://github.com/JawadulHadi/jobbot/pull/10 includes B9/B10 reviews follow-ups and related coverage/CI tuning on `feat/phase-b-reviews-audit-prioritization`.
+- Backend-persisted review audit/outcome history and operational reporting remain **blocked** pending Phase C decisions (authz/identity, storage model, observability/integrations, deploy approvals).
+- Next increments: additional streaming/proxy integration-like edge-case coverage, continued CI reliability tuning as needed, and closure of Phase A manual QA findings.
 - Atlas Agent naming standardized in-repo (`atlas-agent/agents/atlas-agent/`); confirm external/backend labels match if applicable.
 - No deployment/push/tag/release/merge without explicit approval.

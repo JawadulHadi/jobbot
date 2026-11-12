@@ -314,16 +314,48 @@ function ReviewCard({
   );
 }
 
+const RECENT_OUTCOMES_KEY = "jobbot.reviews.recentOutcomes.v1";
+
+function loadRecentOutcomes(): ReviewOutcome[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_OUTCOMES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (item): item is ReviewOutcome =>
+          isRecord(item) &&
+          typeof item.execution_id === "string" &&
+          typeof item.action === "string" &&
+          typeof item.at === "string"
+      )
+      .slice(0, 10);
+  } catch {
+    return [];
+  }
+}
+
 export function Reviews() {
   const [reviews, setReviews] = useState<PendingReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedReview, setResolvedReview] = useState<PendingReview | null>(null);
-  const [recentOutcomes, setRecentOutcomes] = useState<ReviewOutcome[]>([]);
+  const [recentOutcomes, setRecentOutcomes] = useState<ReviewOutcome[]>(() => loadRecentOutcomes());
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("waiting_desc");
   const activeRequest = useRef<AbortController | null>(null);
   const failureCount = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(RECENT_OUTCOMES_KEY, JSON.stringify(recentOutcomes.slice(0, 10)));
+    } catch {
+      // ignore storage errors
+    }
+  }, [recentOutcomes]);
 
   const loadReviews = useCallback(async (showLoading = false) => {
     activeRequest.current?.abort();

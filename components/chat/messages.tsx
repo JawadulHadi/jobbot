@@ -27,7 +27,7 @@ export function Messages({ emptyState = "Ask anything...", messages, status }: M
           {emptyState === "Ask anything..." ? (
             <div className="max-w-md text-center fade-up">
               <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
-                <BotIcon className="size-7" />
+                <BotIcon className="size-7" aria-hidden="true" />
               </div>
               <h2 className="text-xl font-semibold tracking-tight text-foreground">
                 How can Jobbot help today?
@@ -37,10 +37,10 @@ export function Messages({ emptyState = "Ask anything...", messages, status }: M
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-2.5 py-1">
-                  <MessageSquareIcon className="size-3.5" /> Conversational help
+                  <MessageSquareIcon className="size-3.5" aria-hidden="true" /> Conversational help
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-2.5 py-1">
-                  <ShieldCheckIcon className="size-3.5" /> Human-in-the-loop reviews
+                  <ShieldCheckIcon className="size-3.5" aria-hidden="true" /> Human-in-the-loop reviews
                 </span>
               </div>
             </div>
@@ -88,7 +88,7 @@ export function Messages({ emptyState = "Ask anything...", messages, status }: M
         onClick={() => scrollToBottom("smooth")}
         type="button"
       >
-        <ArrowDownIcon className="size-3 text-muted-foreground" />
+        <ArrowDownIcon className="size-3 text-muted-foreground" aria-hidden="true" />
       </button>
     </div>
   );
