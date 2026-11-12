@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - GitHub metadata automation script and tests: `scripts/setup-github-metadata.ps1`, `scripts/setup-github-metadata.test.ts` (milestones/labels/description/topics).
 - Expanded automated coverage (B8+): proxy and health route tests, api-errors/fetch-retry unit tests, and expanded chat streaming/history/reviews route and edge-case tests (including additional chat streaming fallback/ID-safety and reviews API config/malformed-payload cases).
 - Reviews prioritization/audit/outcome tracking (B9/B10): wait-age badges and waiting-based sorting, per-card audit/status context, and recent outcome log with lightweight browser-local persistence across reloads.
+- Production/deployment hardening: `Dockerfile` and `.dockerignore` (Next.js standalone), baseline security headers and `poweredByHeader: false` in `next.config.ts`, env/secrets documentation (`docs/ENV_AND_SECRETS.md`), GitHub env sync script (`scripts/sync-github-env.ps1`) and helper workflow (`.github/workflows/sync-env.yml`), manual release validation workflow (`.github/workflows/release.yml`).
 
 ### Changed
 - Chat and reviews UI/UX refinements (copy, status/helper text, timestamps, layout polish) while preserving core behavior and API contracts.

@@ -35,6 +35,8 @@ This document describes how to prepare Jobbot for a production environment safel
 
 ## 2) Environment variables (production)
 
+See [`docs/ENV_AND_SECRETS.md`](ENV_AND_SECRETS.md) for full definitions, GitHub secrets/variables mapping, and sync tooling.
+
 | Variable | Required | Notes |
 |---|---|---|
 | `MONGODB_AGENTIC_API_URL` | Yes | Deployed workspace streaming endpoint (or approved target) |
@@ -42,30 +44,34 @@ This document describes how to prepare Jobbot for a production environment safel
 | `MONGODB_AGENTIC_CLIENT_SECRET` | Yes (deployed endpoints) | Server-side secret |
 | `APP_BASIC_AUTH_USER` | Optional | Interim gate only; set with password |
 | `APP_BASIC_AUTH_PASSWORD` | Optional | Interim gate only; set with user |
+| `OPENAI_API_KEY` | Optional | Only if required by your agent/runtime; not used by this Next.js app directly |
 
-Validate configuration via `GET /api/health` after deploy (without exposing secrets).
+**Tooling:** `scripts/sync-github-env.ps1` (sync local env to GitHub secrets/variables via `gh`, dry-run supported) and `.github/workflows/sync-env.yml` (helper/check workflow). Validate configuration via `GET /api/health` after deploy (without exposing secrets).
 
-## 3) Deployment targets
+## 3) Deployment targets (best path)
 
-### Vercel (recommended for Next.js)
+### Vercel (recommended)
+**Best option for this Next.js App Router app:** managed hosting with native Next.js support, environment/secret management, preview deployments, automatic HTTPS, and easy rollbacks.
 - **Install:** `pnpm install`
 - **Build:** `pnpm build`
-- **Output:** Next.js (App Router)
-- **Env vars:** configure all required secrets in project settings (Production/Preview/Development as appropriate)
-- **Middleware/proxy:** Next.js 16 deprecates `middleware` convention in favor of `proxy` (warning observed during build) — plan migration in a future approved change; current behavior remains functional but should be tracked.
-- **Deploy action:** only after explicit approval
+- **Output:** Next.js (App Router); `output: "standalone"` is enabled for portability
+- **Env vars/secrets:** configure in Vercel project settings (Production/Preview as needed). Use `docs/ENV_AND_SECRETS.md` and `scripts/sync-github-env.ps1` for GitHub-side secret/variable management.
+- **Auth gate:** optional `APP_BASIC_AUTH_*` enforced via `proxy.ts` (interim only; full authz required before public production).
+- **Deploy action:** only after explicit approval.
 
-### Other hosts (Render/Railway/Fly.io/Docker hosts)
-- **Build:** `pnpm install && pnpm build`
-- **Start:** `pnpm start` (bind to provided `PORT`)
-- Ensure Node 18+ (22 recommended), HTTPS, and secret management.
-- If using containers, create/maintain a Dockerfile aligned with pnpm/Next.js output and platform requirements (not included by default; add via approved PR).
+### Docker / self-hosted (portable alternative)
+Use for Render, Railway, Fly.io, Kubernetes, or VM/container platforms.
+- **Included:** `Dockerfile` (multi-stage, pnpm, standalone runtime) and `.dockerignore`
+- **Build:** `docker build -t jobbot .`
+- **Run:** `docker run --rm -p 3000:3000 -e MONGODB_AGENTIC_API_URL=... [other env vars] jobbot` (or `--env-file`)
+- **Health check:** `GET /api/health`; ensure HTTPS, secret management, logging/monitoring, and rollback per platform.
 
 ## 4) CI/CD
 
-- GitHub Actions workflow: `.github/workflows/ci.yml` runs `pnpm install --frozen-lockfile`, `lint`, `test`, `build` on pushes/PRs to `main`.
+- **CI:** `.github/workflows/ci.yml` runs `pnpm install --frozen-lockfile`, `lint`, `test`, `build` on pushes/PRs to `main`.
+- **Env/secrets helper:** `.github/workflows/sync-env.yml` (manual) documents required keys and can report presence when permissions allow; use `scripts/sync-github-env.ps1` to set values.
+- **Release helper:** `.github/workflows/release.yml` (manual, approval-gated) validates tag format and runs quality checks; optional tag/release creation requires `contents: write` and explicit approval.
 - Recommended branch protection (apply with approval): require CI checks, require PR review, disallow direct pushes to `main`.
-- Release automation (tag/release publish) should be approval-gated.
 
 ## 5) Post-deploy verification (when deployed)
 
@@ -79,9 +85,9 @@ Validate configuration via `GET /api/health` after deploy (without exposing secr
 ## 6) Known constraints / follow-ups
 
 - Full authz, session persistence/search, advanced review ops, metrics/alerting, and rate limiting are Phase C/hardening items.
-- “atlas-agent agent” naming may require rename in local agent assets (`atlas-agent/agents/atlas-agent/`) and/or backend/Agent Engine configuration (clarification needed).
+- Atlas Agent naming is standardized in-repo/UI/platform references; confirm external/backend Agent Engine workspace or console labels if you require exact naming there.
 - Accessibility/manual visual QA completion remains in progress (Phase A/B).
-- Local git reconciliation (local `main` behind `origin/main`) and approved branch/PR/merge flow must be completed before production release actions.
+- Ensure GitHub/deployment secrets are configured (see `docs/ENV_AND_SECRETS.md`) before production use. Merge/tag/release/deploy actions require explicit approval.
 
 ## 7) Approval gate
 
