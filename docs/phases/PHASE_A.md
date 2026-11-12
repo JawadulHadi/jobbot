@@ -13,8 +13,8 @@
 - [x] Branded favicon/app icons and metadata baseline (`app/icon.svg`, `app/layout.tsx` metadata).
 - [x] In-product configuration/help hints (non-sensitive) and refined status/error copy (baseline).
 - [x] Manual dark/light theme toggle with persisted preference and system fallback.
-- [~] Accessibility pass (focus states, contrast checks, labels, keyboard flow) — focus-visible rings, accessible labels, skip link/main landmarks, and theme controls added; full contrast and keyboard walkthrough pending.
-- [~] Visual QA in light/dark modes and responsive layouts — runtime checks completed; full manual/browser QA pending.
+- [~] Accessibility pass (focus states, contrast checks, labels, keyboard flow) — focus-visible rings, accessible labels, skip link/main landmarks, and theme controls in place; contrast tokens and focus visibility for raw controls/links improved via code audit/fixes (2026-11-12). Full manual keyboard/screen-reader and device QA still recommended.
+- [~] Visual QA in light/dark modes and responsive layouts — runtime/build checks passed; full manual visual QA across breakpoints/states (streaming, suspended, error, configured/unconfigured) still pending.
 
 ## Parallel workstreams
 
@@ -93,6 +93,15 @@
 - **Changes:** Resolved accidental merge/stash conflict markers by restoring intended enhanced UI/copy/accessibility behavior (focus-visible review link, aria-live and readable setup/status copy). Verified no remaining conflict markers in tracked source/docs.
 - **Rationale:** Ensure repository is correct, buildable, and safe to continue toward production preparation.
 
+### A14. Phase A QA pass — accessibility/contrast/focus hardening (2026-11-12)
+- **Files:** `app/globals.css`, `app/reviews/page.tsx`, `components/chat/chat.tsx`, `components/reviews/reviews.tsx`, `docs/phases/PHASE_A.md`, `CHANGELOG.md`
+- **Changes:**
+  - Tuned light/dark `--muted-foreground`, secondary/border/input/ring tokens for improved text and control contrast.
+  - Added visible focus styles to reviews selects/textareas and key links; ensured skip-target points to the reviews page `<main id="main-content">`.
+  - Marked decorative icons as `aria-hidden="true"` in chat/reviews headers and controls to reduce screen-reader noise.
+- **Validation:** `pnpm lint` pass, `pnpm build` pass. `pnpm test` 80/81 pass (1 timeout in unrelated `scripts/setup-github-metadata.test.ts`).
+- **Notes:** Manual keyboard-only walkthrough, screen-reader spot checks, and responsive visual QA across all key states remain recommended to fully close Phase A.
+
 ## Validation log
 
 | Date | Check | Command / Method | Result | Notes |
@@ -103,6 +112,7 @@
 | 2026-11-12 | Dev reconnect | `npx -y pnpm@10.24.0 dev` + HTTP checks | Pass | `/` and `/reviews` returned 200 after recovery |
 | 2026-11-12 | Lint/Test/Build (restoration + refinements) | `npx -y pnpm@10.24.0 lint`, `test`, `build` | Pass | Lint clean, tests 64/64 (10 files), build succeeded |
 | 2026-11-12 | Conflict-marker scan & fix | source/docs scan + manual resolution | Pass | Removed conflict markers from `chat.tsx`, `reviews.tsx`, `PHASE_A.md`; repository normalized |
+| 2026-11-12 | Phase A QA pass (code audit + fixes) | `pnpm lint`, `pnpm test`, `pnpm build` | Pass (with unrelated flaky timeout) | Improved contrast tokens, focus-visible states for review selects/textareas/links, skip-target landmark fix (`app/reviews/page.tsx`, reviews `<main id="main-content">`), decorative icon `aria-hidden`. Lint/build passed; tests 80/81 passed (1 timeout in `scripts/setup-github-metadata.test.ts`, unrelated). Manual keyboard/screen-reader and responsive visual QA still pending. |
 
 ## Decisions & assumptions
 

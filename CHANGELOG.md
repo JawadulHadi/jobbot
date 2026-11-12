@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - Chat and reviews UI/UX refinements (copy, status/helper text, timestamps, layout polish) while preserving core behavior and API contracts.
 - Test alignment for restored UI labels (`components/chat/chat.test.tsx`).
+- Phase A accessibility/QA hardening: improved contrast tokens, visible focus styles for review controls/links, corrected reviews skip-target/main landmark, and decorative icon `aria-hidden` attributes.
 
 ### Fixed
 - Recovery from `.next` Turbopack cache corruption during local dev/build (documented operational recovery).
@@ -29,10 +30,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Non-sensitive request tracing only; no secrets/tokens exposed in request IDs or responses.
 
 ### Validation (latest recorded)
-- `npx -y pnpm@10.24.0 lint` — pass
-- `npx -y pnpm@10.24.0 test` — pass (64/64, 10 files)
-- `npx -y pnpm@10.24.0 build` — pass
-- Local dev runtime checks: `/` and `/reviews` responsive after recovery
+- `pnpm lint` — pass
+- `pnpm build` — pass
+- `pnpm test` — 80/81 pass (1 timeout in unrelated `scripts/setup-github-metadata.test.ts`; other suites/app tests passed)
+- Manual keyboard-only, screen-reader, and responsive visual QA across all key states remains pending.
 
 ### Notes
 - **Not released/tagged yet.** Local `main` includes uncommitted work and is behind `origin/main` by 2 commits; reconciliation and approval required before branching/PR/merge/tag/push.
