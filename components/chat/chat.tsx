@@ -359,7 +359,7 @@ export function Chat() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand)] text-[var(--brand-foreground)] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
-                <BotIcon className="size-5" />
+                <BotIcon className="size-5" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-semibold tracking-tight text-foreground">
@@ -376,7 +376,7 @@ export function Chat() {
                 className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 href="/reviews"
               >
-                <ShieldCheckIcon className="size-3.5 text-[var(--brand)]" />
+                <ShieldCheckIcon className="size-3.5 text-[var(--brand)]" aria-hidden="true" />
                 Reviews
               </Link>
             </div>
@@ -399,7 +399,7 @@ export function Chat() {
                 variant="outline"
                 className="h-8 w-8"
               >
-                <DicesIcon className="size-3.5" />
+                <DicesIcon className="size-3.5" aria-hidden="true" />
               </Button>
             </div>
             <div className="h-4 w-px bg-border/60 hidden sm:block" aria-hidden="true" />
@@ -427,7 +427,7 @@ export function Chat() {
                 variant="outline"
                 className="h-8 w-8"
               >
-                <DicesIcon className="size-3.5" />
+                <DicesIcon className="size-3.5" aria-hidden="true" />
               </Button>
             </div>
           </div>
