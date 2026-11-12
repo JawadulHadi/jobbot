@@ -109,4 +109,82 @@ describe("POST /api/chat", () => {
     await expect(response.text()).resolves.toContain("must use https");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("rejects invalid JSON bodies and empty messages", async () => {
+    const invalid = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        body: "{not json",
+      })
+    );
+    expect(invalid.status).toBe(400);
+    await expect(invalid.text()).resolves.toContain("Invalid request body");
+
+    const empty = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", parts: [{ type: "text", text: "   " }] }] }),
+      })
+    );
+    expect(empty.status).toBe(400);
+    await expect(empty.text()).resolves.toContain("No message provided");
+  });
+
+  it("returns a stream error message when upstream is unavailable or not ok", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("fetch failed")));
+    const network = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", parts: [{ type: "text", text: "Hi" }] }] }),
+      })
+    );
+    await expect(network.text()).resolves.toContain("couldn't reach the server");
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("upstream error", { status: 500 }))
+    );
+    const upstream = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", parts: [{ type: "text", text: "Hi" }] }] }),
+      })
+    );
+    await expect(upstream.text()).resolves.toContain("something went wrong");
+  });
+
+  it("handles interrupted streams gracefully", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"chunk_type":"text","content":"Hi"}\n'));
+        controller.error(new Error("boom"));
+      },
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(stream, { headers: { "Content-Type": "text/event-stream" } }))
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", parts: [{ type: "text", text: "Hi" }] }],
+          session_id: "session-1",
+        }),
+      })
+    );
+
+    const body = await response.text();
+    expect(body).toContain("connection was interrupted");
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+  });
 });

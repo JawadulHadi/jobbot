@@ -98,4 +98,16 @@ describe("GET /api/reviews", () => {
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ error: "Project not found" });
   });
+
+  it("normalizes network failures into a user-friendly 500 error", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("fetch failed")));
+
+    const response = await GET();
+
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.error).toContain("Network error");
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+  });
 });

@@ -10,8 +10,8 @@
 
 - [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in chat/reviews client flows and JSON API route catch paths for normalized user-friendly network/timeout fallback messages; shared `fetchWithRetry` added for history/reviews/resume upstream calls. Further route error-shape/status standardization and chat streaming error contract refinements pending).
 - [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews and chat session background polling now use exponential backoff on consecutive failures (capped) with reset on success/visibility/manual actions. Deeper restore/history edge cases pending.
-- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, wait-time prioritization/sort options, audit/status context, clearer submission/success/filter-empty states, and in-session recent outcome tracking; deeper ops/persistence cues pending).
-- [~] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI — progressed (PR #9 added proxy/health, api-errors/fetch-retry, and expanded route coverage; this increment adds reviews prioritization/audit/outcome coverage. Further streaming/history/proxy edge-case and CI hardening pending).
+- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sort, clearer submission/success/filter-empty states; further prioritization/audit cues pending).
+- [~] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI — progressed (added proxy/health route tests, api-errors/fetch-retry unit tests, and expanded chat streaming/history/reviews route coverage; CI workflow and Vitest config hardened). Further end-to-end/edge-case coverage pending.
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` headers added.
 
 ## Parallel workstreams
@@ -102,19 +102,18 @@
 - Observability additions must remain non-sensitive (no secrets/tokens in IDs or payloads).
 - Polling improvements should reduce unnecessary work without delaying recovery.
 
-### B9. Reviews prioritization, audit cues, and outcome tracking — 2026-11-12
+### B8. Expanded tests and CI hardening — 2026-11-12
 
-- **Files:** `components/reviews/reviews.tsx`, `components/reviews/reviews.test.tsx`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Files:** `proxy.test.ts`, `app/api/health/route.test.ts`, `app/api/chat/route.test.ts`, `app/api/chat/history/route.test.ts`, `app/api/reviews/route.test.ts`, `lib/api-errors.test.ts`, `lib/fetch-with-retry.test.ts`, `vitest.config.mts`, `.github/workflows/ci.yml`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
 - **Changes:**
-  - Added wait-age prioritization cues and sorting: "Waiting (longest/newest first)" sort options (default longest first), per-card waiting-age badge, and wait-time-aware ordering.
-  - Added audit/context metadata in review cards (status/interrupt-vs-decision context) and refined timestamp labeling for clearer review state.
-  - Added in-session "Recent outcomes" tracking/log for resolved reviews (action, execution/session, reason, timestamp) to improve operator feedback after submissions.
-  - Extended reviews tests to cover prioritization/sort default, audit cues, and outcome tracking while preserving existing decision/interrupt/resume behaviors.
-- **Validation:** targeted reviews tests passed (8/8); lint/build and broader validation recorded in increment summary (PR pending).
+  - Added proxy basic-auth tests and health route tests (config/validation/request-id behavior).
+  - Expanded chat route tests (invalid body/empty message, upstream non-ok/network error stream responses, interrupted stream handling) and added history/reviews route tests for normalized network-failure responses.
+  - Added unit tests for `normalizeApiErrorMessage`/`isAbortError` and `fetchWithRetry` behavior (success, 5xx/network retry, no retry on 4xx).
+  - Hardened CI workflow with read-only permissions and concurrency cancellation; tightened Vitest discovery with explicit include/exclude patterns.
+- **Validation:** `pnpm lint` pass; `pnpm build` pass. Targeted tests for changed/new suites passed (36/36 across 8 files). Full `pnpm test` run in this environment reported unrelated `scripts/setup-github-metadata.test.ts` pwsh timeouts and one transient `components/reviews/reviews.test.tsx` timeout under load (re-run of reviews suite passed: 7/7).
 
 ## Open items / blockers
 
-- **PR #9 (open):** https://github.com/JawadulHadi/jobbot/pull/9 includes B8 tests/CI hardening from `feat/phase-b-tests-ci-hardening` and is not merged; this branch/work may be based on `main` and can require rebase/reconciliation after #9 merges.
-- Next increments: deeper reviews ops persistence/audit history, further streaming/history/reviews/proxy edge-case coverage, and continued CI/reliability tuning.
+- Next increments: deeper reviews prioritization/audit/outcome tracking, further streaming/history/reviews edge-case and proxy-integration coverage, and continued CI/reliability tuning.
 - Atlas Agent naming standardized in-repo (`atlas-agent/agents/atlas-agent/`); confirm external/backend labels match if applicable.
 - No deployment/push/tag/release/merge without explicit approval.

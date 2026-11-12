@@ -78,4 +78,18 @@ describe("GET /api/chat/history", () => {
       error: LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE,
     });
   });
+
+  it("normalizes network failures into a user-friendly 500 error", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("fetch failed")));
+
+    const response = await GET(
+      new Request("http://app.local/api/chat/history?session_id=session-1")
+    );
+
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.error).toContain("Network error");
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+  });
 });
