@@ -99,24 +99,17 @@ _*Gaps / opportunities*
 - [x] Manual dark/light theme toggle with persisted preference and system fallback.
 - [~] Accessibility pass (focus states, contrast checks, labels, keyboard flow) — focus/labels/skip link/landmarks improved; full contrast/keyboard audit pending.
 - [~] Visual QA in light/dark modes and responsive layouts — runtime checks done; full manual pass pending.
->>>>>>> Stashed changes
 
 ### Phase B — Strengthen existing implementations (in progress)
 
 *Goal: reliability, clarity, and maintainability of what already exists.*
 
-- [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX.
-<<<<<<< Updated upstream
-- [ ] Improve session/history UX (clear restore states, better polling/backoff, edge-case handling).
-- [ ] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback).
-- [ ] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI.
-- [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` added to API responses.
-=======
-- [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling added (chat/reviews).
-- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — started.
+- [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — helper/UX improvements started (`lib/api-errors.ts`, clearer reviews feedback); broader normalization pending.
+- [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling added (chat/reviews); retry/backoff refinements pending.
+- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sorting, shown-vs-total status, improved submission/success/filter-empty states).
+- [~] Production/compatibility hardening — migrated `middleware` to Next.js 16 `proxy`, added CI workflow and production deployment prep docs (no deploy without approval).
 - [ ] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI.
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` on API responses.
->>>>>>> Stashed changes
 
 ### Phase C — New implementations (initiated: scoping/readiness; implementation pending approvals)
 

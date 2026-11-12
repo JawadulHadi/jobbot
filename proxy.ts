@@ -17,7 +17,7 @@ function safeEqual(a: string, b: string) {
   return out === 0;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const user = process.env.APP_BASIC_AUTH_USER;
   const pass = process.env.APP_BASIC_AUTH_PASSWORD;
   if (!user || !pass) return NextResponse.next();

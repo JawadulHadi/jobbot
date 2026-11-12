@@ -110,7 +110,7 @@
 - Accent palette is warm amber/brown (user-approved direction replacing green); can be adjusted to another brown/red/yellow variant.
 - No deployment/push/promotion without explicit approval.
 - Core backend/API contracts preserved; improvements are incremental and non-breaking where tested.
-- “atlas-agent agent” rename requested but naming source appears external to app UI (local agent assets exist under `atlas-agent/agents/atlas-agent/`); requires clarification.
+- Atlas Agent naming has been standardized in-repo (`atlas-agent/agents/atlas-agent/`). Confirm any external/backend Agent Engine workspace or UI labels match.
 
 ## Remaining work
 
