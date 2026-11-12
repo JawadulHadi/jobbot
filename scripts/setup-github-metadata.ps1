@@ -1,9 +1,11 @@
-param(
+﻿param(
   [string]$Repo = "JawadulHadi/jobbot",
   [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Invoke-GH([string[]]$GhArgs) {
   if ($DryRun) {
@@ -63,11 +65,13 @@ function Get-MilestoneByTitle([object[]]$Milestones, [string]$Title) {
 
 Write-Host "Configuring GitHub metadata for $Repo"
 
+$em = [System.Text.Encoding]::UTF8.GetString([byte[]](226,128,148))
+
 # Milestones (create or update; race-safe recheck before create)
 $desiredMilestones = @(
-  @{ title = "Phase A — Brand & UI Polish"; description = "Cohesive branded UI without core behavior changes. Tokens/theme, icon/metadata, copy, a11y baseline, visual QA. Exit: theming complete, a11y/visual QA satisfied, docs/validation recorded." },
-  @{ title = "Phase B — Strengthen Existing Implementations"; description = "Reliability, UX hardening, maintainability. Error mapping, polling/backoff, reviews UX, tests/CI, request tracing. Exit: hardened flows, expanded coverage/CI, documented validation." },
-  @{ title = "Phase C — New Implementations"; description = "Approved higher-value capabilities (scoped). Authz, session management, review ops, conversation features, ops/observability, brand package. Exit: scoped features delivered with security/ops requirements met." },
+  @{ title = "Phase A $em Brand & UI Polish"; description = "Cohesive branded UI without core behavior changes. Tokens/theme, icon/metadata, copy, a11y baseline, visual QA. Exit: theming complete, a11y/visual QA satisfied, docs/validation recorded." },
+  @{ title = "Phase B $em Strengthen Existing Implementations"; description = "Reliability, UX hardening, maintainability. Error mapping, polling/backoff, reviews UX, tests/CI, request tracing. Exit: hardened flows, expanded coverage/CI, documented validation." },
+  @{ title = "Phase C $em New Implementations"; description = "Approved higher-value capabilities (scoped). Authz, session management, review ops, conversation features, ops/observability, brand package. Exit: scoped features delivered with security/ops requirements met." },
   @{ title = "Release & Governance"; description = "Release discipline and repo hygiene. Changelog/release notes/tags, process docs, README/wiki, metadata/labels. Exit: every build/phase follows release process; tags/milestones/docs current." },
   @{ title = "Hotfix / Patch"; description = "Urgent corrective releases. Targeted fixes + regression validation. Exit: patch released/tagged with notes and verification." }
 )
@@ -161,7 +165,7 @@ foreach ($l in $desiredLabels) {
 }
 
 # Repository description/topics (canonical)
-$desc = "Jobbot — a branded Next.js chat and human-review UI for Atlas Agent Engine. Streaming chat with session continuity, suspend/resume review queue, theming, accessibility baseline, and operational hardening."
+$desc = "Jobbot $em a branded Next.js chat and human-review UI for Atlas Agent Engine. Streaming chat with session continuity, suspend/resume review queue, theming, accessibility baseline, and operational hardening."
 $topics = @("nextjs","react","typescript","chatbot","ai-assistant","atlas-agent-engine","mongodb","human-in-the-loop","streaming","tailwindcss","vercel-ai-sdk","jobbot")
 
 Write-Host "Updating repository description/topics"
