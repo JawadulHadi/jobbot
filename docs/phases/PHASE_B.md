@@ -10,8 +10,8 @@
 
 - [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in chat/reviews client flows and JSON API route catch paths for normalized user-friendly network/timeout fallback messages; shared `fetchWithRetry` added for history/reviews/resume upstream calls. Further route error-shape/status standardization and chat streaming error contract refinements pending).
 - [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews and chat session background polling now use exponential backoff on consecutive failures (capped) with reset on success/visibility/manual actions. Deeper restore/history edge cases pending.
-- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sort, clearer submission/success/filter-empty states; further prioritization/audit cues pending).
-- [ ] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI.
+- [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, wait-time prioritization/sort options, audit/status context, clearer submission/success/filter-empty states, and in-session recent outcome tracking; deeper ops/persistence cues pending).
+- [~] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI — progressed (PR #9 added proxy/health, api-errors/fetch-retry, and expanded route coverage; this increment adds reviews prioritization/audit/outcome coverage. Further streaming/history/proxy edge-case and CI hardening pending).
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` headers added.
 
 ## Parallel workstreams
@@ -102,8 +102,19 @@
 - Observability additions must remain non-sensitive (no secrets/tokens in IDs or payloads).
 - Polling improvements should reduce unnecessary work without delaying recovery.
 
+### B9. Reviews prioritization, audit cues, and outcome tracking — 2026-11-12
+
+- **Files:** `components/reviews/reviews.tsx`, `components/reviews/reviews.test.tsx`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:**
+  - Added wait-age prioritization cues and sorting: "Waiting (longest/newest first)" sort options (default longest first), per-card waiting-age badge, and wait-time-aware ordering.
+  - Added audit/context metadata in review cards (status/interrupt-vs-decision context) and refined timestamp labeling for clearer review state.
+  - Added in-session "Recent outcomes" tracking/log for resolved reviews (action, execution/session, reason, timestamp) to improve operator feedback after submissions.
+  - Extended reviews tests to cover prioritization/sort default, audit cues, and outcome tracking while preserving existing decision/interrupt/resume behaviors.
+- **Validation:** targeted reviews tests passed (8/8); lint/build and broader validation recorded in increment summary (PR pending).
+
 ## Open items / blockers
 
-- Next increments: structured client-facing error mapping improvements, polling/backoff strategy refinement, reviews filtering/sorting/submission feedback, and expanded automated/CI coverage.
+- **PR #9 (open):** https://github.com/JawadulHadi/jobbot/pull/9 includes B8 tests/CI hardening from `feat/phase-b-tests-ci-hardening` and is not merged; this branch/work may be based on `main` and can require rebase/reconciliation after #9 merges.
+- Next increments: deeper reviews ops persistence/audit history, further streaming/history/reviews/proxy edge-case coverage, and continued CI/reliability tuning.
 - Atlas Agent naming standardized in-repo (`atlas-agent/agents/atlas-agent/`); confirm external/backend labels match if applicable.
-- No deployment/push without approval.
+- No deployment/push/tag/release/merge without explicit approval.

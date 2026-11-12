@@ -17,7 +17,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-type SortMode = "updated_desc" | "updated_asc" | "created_desc" | "created_asc";
+type SortMode =
+  | "updated_desc"
+  | "updated_asc"
+  | "created_desc"
+  | "created_asc"
+  | "waiting_desc"
+  | "waiting_asc";
+
+type ReviewOutcome = {
+  execution_id: string;
+  session_id?: string;
+  action: string;
+  at: string;
+  reason?: string;
+};
+
+function waitingMs(review: PendingReview): number {
+  const base = reviewTimestamp(review, "created_at") || reviewTimestamp(review, "updated_at");
+  return base > 0 ? Math.max(0, Date.now() - base) : 0;
+}
+
+function formatWaitAge(review: PendingReview): string | null {
+  const ms = waitingMs(review);
+  if (!ms) return null;
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ${mins % 60}m`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ${hrs % 24}h`;
+}
 
 function allowedDecisions(review: PendingReview): string[] {
   const decisions = review.suspend_context?.allowed_decisions;
@@ -94,7 +125,7 @@ function ReviewCard({
   onResolved,
 }: {
   review: PendingReview;
-  onResolved: (review: PendingReview) => void;
+  onResolved: (review: PendingReview, action: string) => void;
 }) {
   const interrupts = getPendingInterrupts(review);
   const [decision, setDecision] = useState(allowedDecisions(review)[0]);
@@ -134,7 +165,13 @@ function ReviewCard({
     setError(null);
     try {
       await submitReview(review.execution_id, request);
-      onResolved(review);
+      const action =
+        request.type === "decision"
+          ? `Decision: ${request.decision}`
+          : `Interrupt resumed (${Object.keys(request.resume_map).length} answer${
+              Object.keys(request.resume_map).length === 1 ? "" : "s"
+            })`;
+      onResolved(review, action);
     } catch (submissionError) {
       if (isAbortError(submissionError)) return;
       setError(
@@ -156,9 +193,16 @@ function ReviewCard({
             {review.execution_id}
           </p>
         </div>
-        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
-          Suspended
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {formatWaitAge(review) ? (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+              Waiting {formatWaitAge(review)}
+            </span>
+          ) : null}
+          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+            Suspended
+          </span>
+        </div>
       </div>
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -170,7 +214,7 @@ function ReviewCard({
         ) : null}
         {review.created_at ? (
           <div>
-            <dt className="text-xs text-muted-foreground">Submitted</dt>
+            <dt className="text-xs text-muted-foreground">Created</dt>
             <dd className="mt-1">{new Date(review.created_at).toLocaleString()}</dd>
           </div>
         ) : null}
@@ -180,6 +224,13 @@ function ReviewCard({
             <dd className="mt-1">{new Date(review.updated_at).toLocaleString()}</dd>
           </div>
         ) : null}
+        <div>
+          <dt className="text-xs text-muted-foreground">Audit</dt>
+          <dd className="mt-1 text-xs text-muted-foreground">
+            Status: suspended
+            {interrupts ? ` · ${interrupts.length} interrupt${interrupts.length === 1 ? "" : "s"}` : " · decision review"}
+          </dd>
+        </div>
       </dl>
 
       {contextEntries(review).length > 0 ? (
@@ -268,8 +319,9 @@ export function Reviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedReview, setResolvedReview] = useState<PendingReview | null>(null);
+  const [recentOutcomes, setRecentOutcomes] = useState<ReviewOutcome[]>([]);
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("updated_desc");
+  const [sortMode, setSortMode] = useState<SortMode>("waiting_desc");
   const activeRequest = useRef<AbortController | null>(null);
   const failureCount = useRef(0);
 
@@ -356,11 +408,21 @@ export function Reviews() {
     };
   }, [loadReviews]);
 
-  const handleResolved = useCallback((review: PendingReview) => {
+  const handleResolved = useCallback((review: PendingReview, action: string) => {
     const request = activeRequest.current;
     activeRequest.current = null;
     request?.abort();
     setResolvedReview(review);
+    setRecentOutcomes((current) => [
+      {
+        execution_id: review.execution_id,
+        ...(review.session_id ? { session_id: review.session_id } : {}),
+        ...(review.suspend_reason ? { reason: review.suspend_reason } : {}),
+        action,
+        at: new Date().toISOString(),
+      },
+      ...current,
+    ].slice(0, 10));
     setReviews((current) =>
       current.filter((item) => item.execution_id !== review.execution_id)
     );
@@ -377,6 +439,10 @@ export function Reviews() {
           return reviewTimestamp(b, "created_at") - reviewTimestamp(a, "created_at");
         case "created_asc":
           return reviewTimestamp(a, "created_at") - reviewTimestamp(b, "created_at");
+        case "waiting_desc":
+          return waitingMs(b) - waitingMs(a);
+        case "waiting_asc":
+          return waitingMs(a) - waitingMs(b);
         case "updated_desc":
         default:
           return reviewTimestamp(b, "updated_at") - reviewTimestamp(a, "updated_at");
@@ -408,7 +474,7 @@ export function Reviews() {
                     : `${visibleReviews.length} of ${reviews.length} suspended execution${reviews.length === 1 ? "" : "s"} shown.`}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Queue refreshes automatically when visible. Use search/sort to prioritize reviews and submit decisions to resume the agent.
+                  Queue refreshes automatically when visible. Prioritize by wait time, use search/sort, and track recent outcomes below.
                 </p>
               </div>
             </div>
@@ -450,10 +516,12 @@ export function Reviews() {
               onChange={(e) => setSortMode(e.target.value as SortMode)}
               value={sortMode}
             >
+              <option value="waiting_desc">Waiting (longest first)</option>
+              <option value="waiting_asc">Waiting (newest first)</option>
               <option value="updated_desc">Updated (newest)</option>
               <option value="updated_asc">Updated (oldest)</option>
-              <option value="created_desc">Submitted (newest)</option>
-              <option value="created_asc">Submitted (oldest)</option>
+              <option value="created_desc">Created (newest)</option>
+              <option value="created_asc">Created (oldest)</option>
             </select>
           </div>
         </div>
@@ -481,6 +549,34 @@ export function Reviews() {
               </p>
             ) : null}
           </div>
+        ) : null}
+
+        {recentOutcomes.length > 0 ? (
+          <section aria-label="Recent review outcomes" className="mt-6 rounded-xl border border-border/60 bg-card/40 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-foreground">Recent outcomes (this session)</h2>
+              <span className="text-xs text-muted-foreground">{recentOutcomes.length} tracked</span>
+            </div>
+            <ul className="mt-3 space-y-2">
+              {recentOutcomes.map((outcome) => (
+                <li key={`${outcome.execution_id}-${outcome.at}`} className="rounded-lg border bg-background/60 p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium text-foreground">{outcome.action}</p>
+                    <time className="text-xs text-muted-foreground" dateTime={outcome.at}>
+                      {new Date(outcome.at).toLocaleString()}
+                    </time>
+                  </div>
+                  <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
+                    {outcome.execution_id}
+                    {outcome.session_id ? ` · session ${outcome.session_id}` : ""}
+                  </p>
+                  {outcome.reason ? (
+                    <p className="mt-1 text-xs text-muted-foreground">Reason: {outcome.reason.replaceAll("_", " ")}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         {loading && reviews.length === 0 ? (

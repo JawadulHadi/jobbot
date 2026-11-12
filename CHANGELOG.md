@@ -17,12 +17,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Visibility-aware polling for suspended/resuming chat sessions and reviews queue refresh.
 - Comprehensive phase/roadmap documentation: `docs/BRAND_AND_ROADMAP.md`, `docs/phases/PHASE_A.md`, `docs/phases/PHASE_B.md`, `docs/phases/PHASE_C.md`.
 - GitHub metadata automation script and tests: `scripts/setup-github-metadata.ps1`, `scripts/setup-github-metadata.test.ts` (milestones/labels/description/topics).
+- Reviews prioritization/audit/outcome tracking: wait-age badges and waiting-based sorting, per-card audit/status context, and in-session recent outcome log for resolved reviews.
 
 ### Changed
 - Chat and reviews UI/UX refinements (copy, status/helper text, timestamps, layout polish) while preserving core behavior and API contracts.
 - Test alignment for restored UI labels (`components/chat/chat.test.tsx`).
 - Phase A accessibility/QA hardening: improved contrast tokens, visible focus styles for review controls/links, corrected reviews skip-target/main landmark, and decorative icon `aria-hidden` attributes.
 - Client-side and route-level API error normalization/retry hardening: shared `fetchWithRetry`, normalized JSON route catch-path errors, safer network/timeout message mapping, and exponential backoff for chat/reviews background polling on consecutive failures.
+- Reviews queue UX: default prioritization by waiting time with additional sort options and expanded review metadata/cues for operator triage.
 
 ### Fixed
 - Recovery from `.next` Turbopack cache corruption during local dev/build (documented operational recovery).
@@ -32,9 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Non-sensitive request tracing only; no secrets/tokens exposed in request IDs or responses.
 
 ### Validation (latest recorded)
-- `pnpm lint` — pass
-- `pnpm test` — pass (81/81, 11 files)
-- `pnpm build` — pass
+- `pnpm lint` — pass (latest increment)
+- `pnpm build` — pass (latest increment)
+- Targeted tests (reviews prioritization/audit/outcome increment): `components/reviews/reviews.test.tsx` — pass (8/8)
+- Full `pnpm test` and CI for this increment: pending (PR #9 open separately for B8 tests/CI hardening; local full-run may include known `scripts/setup-github-metadata.test.ts` pwsh timeout behavior)
 - Manual keyboard-only, screen-reader, responsive visual QA and live-backend end-to-end QA remain pending.
 
 ### Notes
