@@ -132,6 +132,13 @@
 - **Validation:** `pnpm lint` pass, `pnpm build` pass. Targeted suites passed in batched runs due local Vitest pool startup flakiness: proxy/health/api-errors/fetch-with-retry 17/17, history/resume/reviews 25/25. PR #10 latest pushed commit has passing `quality` and CodeQL/security checks.
 - **Notes:** Backend-persisted review audit/outcome storage and richer ops reporting remain Phase C-scoped (authz/storage/observability approvals required). Full manual keyboard/screen-reader/responsive QA remains pending. No deploy/tag/release/merge without explicit approval.
 
+### B11. Streaming edge-case coverage follow-up — 2026-11-13
+
+- **Files:** `app/api/chat/route.test.ts`, `docs/phases/PHASE_B.md`
+- **Changes:** Added chat route tests for empty/no-body upstream responses, unsafe session/thread ID filtering, and streams that complete without content or suspension (fallback response) to strengthen streaming/error-path coverage.
+- **Validation:** `pnpm lint` pass; `pnpm exec vitest run app/api/chat/route.test.ts` pass (9/9).
+- **Notes:** Continues Phase B quality hardening on a new branch/PR from updated `main`; no deploy/tag/release/merge without explicit approval.
+
 ## Open items / blockers
 
 - **PR #9:** merged into `main` (B8 tests/CI hardening baseline).
