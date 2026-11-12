@@ -215,7 +215,7 @@ function ReviewCard({
               Resume map
             </label>
             <textarea
-              className="min-h-36 w-full rounded-lg border bg-background p-3 font-mono text-sm"
+              className="min-h-36 w-full rounded-lg border bg-background p-3 font-mono text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id={`resume-${review.execution_id}`}
               onChange={(event) => setResumeMap(event.target.value)}
               spellCheck={false}
@@ -231,7 +231,7 @@ function ReviewCard({
               Decision
             </label>
             <select
-              className="h-9 w-full rounded-lg border bg-background px-3 text-sm"
+              className="h-9 w-full rounded-lg border bg-background px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id={`decision-${review.execution_id}`}
               onChange={(event) => setDecision(event.target.value)}
               value={decision}
@@ -246,7 +246,7 @@ function ReviewCard({
               Reviewer notes <span className="font-normal text-muted-foreground">(optional)</span>
             </label>
             <textarea
-              className="min-h-24 w-full rounded-lg border bg-background p-3 text-sm"
+              className="min-h-24 w-full rounded-lg border bg-background p-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id={`notes-${review.execution_id}`}
               onChange={(event) => setNotes(event.target.value)}
               value={notes}
@@ -386,16 +386,19 @@ export function Reviews() {
   }, [query, reviews, sortMode]);
 
   return (
-    <main className="min-h-dvh bg-background px-4 py-8">
+    <main id="main-content" className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 pb-6">
           <div>
-            <Link className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors" href="/">
+            <Link
+              className="inline-flex items-center rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              href="/"
+            >
               ← Back to chat
             </Link>
             <div className="mt-4 flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
-                <ShieldCheckIcon className="size-5" />
+                <ShieldCheckIcon className="size-5" aria-hidden="true" />
               </div>
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">Human reviews</h1>
@@ -421,7 +424,7 @@ export function Reviews() {
               }}
               variant="outline"
             >
-              <RefreshCwIcon className={`mr-2 size-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCwIcon className={`mr-2 size-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
               Refresh
             </Button>
           </div>
@@ -429,7 +432,7 @@ export function Reviews() {
 
         <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border/50 bg-card/30 p-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               aria-label="Search reviews"
               className="pl-9"
@@ -442,7 +445,7 @@ export function Reviews() {
             <FilterIcon className="size-4 text-muted-foreground" aria-hidden="true" />
             <label className="sr-only" htmlFor="review-sort">Sort reviews</label>
             <select
-              className="h-9 rounded-lg border bg-background px-3 text-sm"
+              className="h-9 rounded-lg border bg-background px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id="review-sort"
               onChange={(e) => setSortMode(e.target.value as SortMode)}
               value={sortMode}
@@ -470,7 +473,7 @@ export function Reviews() {
             {resolvedReview.session_id ? (
               <p className="mt-2">
                 <Link
-                  className="font-medium text-primary underline"
+                  className="rounded-sm font-medium text-primary underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   href={`/?session_id=${encodeURIComponent(resolvedReview.session_id)}`}
                 >
                   View the resumed conversation
@@ -487,7 +490,7 @@ export function Reviews() {
         {!loading && !error && reviews.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-dashed border-border/70 bg-card/30 p-10 text-center">
             <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
-              <ShieldCheckIcon className="size-6" />
+              <ShieldCheckIcon className="size-6" aria-hidden="true" />
             </div>
             <h2 className="font-medium text-foreground">No pending reviews</h2>
             <p className="mt-1 text-sm text-muted-foreground">

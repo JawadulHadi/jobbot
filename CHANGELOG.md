@@ -21,8 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - Chat and reviews UI/UX refinements (copy, status/helper text, timestamps, layout polish) while preserving core behavior and API contracts.
 - Test alignment for restored UI labels (`components/chat/chat.test.tsx`).
-- Client-side error normalization in chat and reviews via `lib/api-errors.ts` (`normalizeApiErrorMessage`, `isAbortError`) for clearer, safer user-facing messages and abort handling.
-- Reviews background polling now applies exponential backoff on consecutive load failures (reset on success, visibility regain, or manual refresh) to reduce request churn during transient issues.
+- Phase A accessibility/QA hardening: improved contrast tokens, visible focus styles for review controls/links, corrected reviews skip-target/main landmark, and decorative icon `aria-hidden` attributes.
 
 ### Fixed
 - Recovery from `.next` Turbopack cache corruption during local dev/build (documented operational recovery).
@@ -33,9 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Validation (latest recorded)
 - `pnpm lint` — pass
-- `pnpm test` — pass (81/81, 11 files)
 - `pnpm build` — pass
-- Local dev/runtime checks previously recorded for `/` and `/reviews`; manual end-to-end backend QA pending where applicable
+- `pnpm test` — 80/81 pass (1 timeout in unrelated `scripts/setup-github-metadata.test.ts`; other suites/app tests passed)
+- Manual keyboard-only, screen-reader, and responsive visual QA across all key states remains pending.
 
 ### Notes
 - **Not released/tagged yet.** Local `main` includes uncommitted work and is behind `origin/main` by 2 commits; reconciliation and approval required before branching/PR/merge/tag/push.
