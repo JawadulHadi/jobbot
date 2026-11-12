@@ -6,6 +6,7 @@ import { useChat } from "@ai-sdk/react";
 import { BotIcon, DicesIcon, ShieldCheckIcon } from "lucide-react";
 import Link from "next/link";
 import { generateUUID } from "@/lib/utils";
+import { isAbortError, normalizeApiErrorMessage } from "@/lib/api-errors";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -125,7 +126,9 @@ async function fetchChatHistory(
       typeof body.error === "string"
         ? body.error
         : "Unable to load conversation history.";
-    throw new Error(message);
+    throw new Error(
+      normalizeApiErrorMessage(message, "Unable to load conversation history.")
+    );
   }
   if (!isChatHistory(body)) {
     throw new Error("Conversation history returned an invalid response.");
@@ -203,12 +206,12 @@ export function Chat() {
           setHistoryError(null);
         }
       } catch (error) {
-        if (!controller.signal.aborted && foreground) {
+        if (!controller.signal.aborted && !isAbortError(error) && foreground) {
           setMessages([]);
-          const message =
-            error instanceof Error
-              ? error.message
-              : "Unable to load conversation history.";
+          const message = normalizeApiErrorMessage(
+            error,
+            "Unable to load conversation history."
+          );
           setHistoryError(`${message} You can continue with this session.`);
         }
       } finally {
@@ -290,13 +293,17 @@ export function Chat() {
           return;
         }
         if (body.ok === false && body.error) {
-          setConfigNotice(`Configuration issue: ${body.error}`);
+          setConfigNotice(
+            `Configuration issue: ${normalizeApiErrorMessage(body.error, body.error)}`
+          );
           return;
         }
         setConfigNotice(null);
       })
-      .catch(() => {
-        if (active) setConfigNotice(null);
+      .catch((error) => {
+        if (!active || isAbortError(error)) return;
+        // Health check is best-effort; avoid noisy UI on transient failures.
+        setConfigNotice(null);
       });
     return () => {
       active = false;

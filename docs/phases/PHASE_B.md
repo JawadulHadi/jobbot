@@ -8,8 +8,8 @@
 
 ## Scope / progress
 
-- [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — started (`lib/api-errors.ts` helper, improved reviews error/feedback handling; broader route/client normalization pending).
-- [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling implemented in chat and reviews; retry/backoff strategy refinement pending.
+- [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in reviews and chat client flows for normalized messages/abort handling; broader route-level normalization and shared API error shapes still pending).
+- [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews background polling now uses exponential backoff on consecutive failures with reset on success/visibility/manual refresh. Chat polling/backoff and deeper restore edge cases pending.
 - [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sort, clearer submission/success/filter-empty states; further prioritization/audit cues pending).
 - [ ] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI.
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` headers added.
@@ -68,6 +68,15 @@
   - Added `lib/api-errors.ts` with normalized user-friendly error/abort helpers for future client/API hardening reuse.
   - Preserved existing resume contracts, visibility-aware polling, and accessibility/status semantics.
 - **Validation:** `pnpm lint`, `pnpm test` (64/64), `pnpm build` passed. Manual end-to-end review submission QA against a live backend remains pending.
+
+### B6. Client error normalization and reviews polling backoff — 2026-11-12
+
+- **Files:** `components/chat/chat.tsx`, `components/reviews/reviews.tsx`, `lib/api-errors.ts` (adopted), `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:**
+  - Adopted `normalizeApiErrorMessage`/`isAbortError` in chat history/config flows and reviews load/submit flows for consistent, user-friendly error handling and safe abort behavior.
+  - Added exponential backoff for reviews background polling on consecutive load failures (capped), with reset on successful load, visibility regain, and manual refresh.
+  - Preserved existing contracts, UI states, and accessibility semantics.
+- **Validation:** `pnpm lint` pass; `pnpm test` pass (81/81, 11 files); `pnpm build` pass. Manual end-to-end QA against a live backend remains pending.
 
 ## Validation log
 

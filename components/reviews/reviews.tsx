@@ -12,6 +12,7 @@ import {
   type PendingReview,
   type ResumeReviewRequest,
 } from "@/lib/reviews";
+import { isAbortError, normalizeApiErrorMessage } from "@/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -81,11 +82,11 @@ async function submitReview(
   if (response.ok) return;
 
   const result = await response.json().catch(() => null);
-  throw new Error(
+  const message =
     isRecord(result) && typeof result.error === "string"
       ? result.error
-      : `Review submission failed with HTTP ${response.status}.`
-  );
+      : `Review submission failed with HTTP ${response.status}.`;
+  throw new Error(normalizeApiErrorMessage(message, "Review submission failed."));
 }
 
 function ReviewCard({
@@ -135,10 +136,9 @@ function ReviewCard({
       await submitReview(review.execution_id, request);
       onResolved(review);
     } catch (submissionError) {
+      if (isAbortError(submissionError)) return;
       setError(
-        submissionError instanceof Error
-          ? submissionError.message
-          : "Unable to resume this review."
+        normalizeApiErrorMessage(submissionError, "Unable to resume this review.")
       );
     } finally {
       setSubmitting(false);
@@ -271,6 +271,7 @@ export function Reviews() {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("updated_desc");
   const activeRequest = useRef<AbortController | null>(null);
+  const failureCount = useRef(0);
 
   const loadReviews = useCallback(async (showLoading = false) => {
     activeRequest.current?.abort();
@@ -285,21 +286,23 @@ export function Reviews() {
       const result = await response.json().catch(() => null);
       if (activeRequest.current !== controller) return;
       if (!response.ok) {
-        throw new Error(
+        const message =
           isRecord(result) && typeof result.error === "string"
             ? result.error
-            : `Unable to load reviews (HTTP ${response.status}).`
-        );
+            : `Unable to load reviews (HTTP ${response.status}).`;
+        throw new Error(normalizeApiErrorMessage(message, "Unable to load reviews."));
       }
       const nextReviews =
         isRecord(result) && Array.isArray(result.reviews)
           ? (result.reviews as PendingReview[])
           : [];
       setReviews(nextReviews);
+      failureCount.current = 0;
       setError(null);
     } catch (loadError) {
-      if (controller.signal.aborted) return;
-      setError(loadError instanceof Error ? loadError.message : "Unable to load reviews.");
+      if (controller.signal.aborted || isAbortError(loadError)) return;
+      failureCount.current += 1;
+      setError(normalizeApiErrorMessage(loadError, "Unable to load reviews."));
     } finally {
       if (activeRequest.current === controller) {
         activeRequest.current = null;
@@ -312,6 +315,16 @@ export function Reviews() {
     let stopped = false;
     let timer: number | undefined;
 
+    const nextDelay = () => {
+      const failures = failureCount.current;
+      if (failures <= 0) return REVIEW_POLL_INTERVAL_MS;
+      const backoff = Math.min(
+        REVIEW_POLL_INTERVAL_MS * 2 ** Math.min(failures, 4),
+        60_000
+      );
+      return backoff;
+    };
+
     const schedule = () => {
       if (stopped) return;
       timer = window.setTimeout(async () => {
@@ -319,11 +332,12 @@ export function Reviews() {
           await loadReviews();
         }
         schedule();
-      }, REVIEW_POLL_INTERVAL_MS);
+      }, nextDelay());
     };
 
     const onVisibilityChange = () => {
       if (!stopped && document.visibilityState === "visible") {
+        failureCount.current = 0;
         void loadReviews();
       }
     };
@@ -401,7 +415,10 @@ export function Reviews() {
             <Button
               aria-label="Refresh reviews"
               disabled={loading}
-              onClick={() => void loadReviews(true)}
+              onClick={() => {
+                failureCount.current = 0;
+                void loadReviews(true);
+              }}
               variant="outline"
             >
               <RefreshCwIcon className={`mr-2 size-4 ${loading ? "animate-spin" : ""}`} />
