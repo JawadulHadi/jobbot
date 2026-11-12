@@ -102,6 +102,12 @@
 - **Validation:** `pnpm lint` pass, `pnpm build` pass. `pnpm test` 80/81 pass (1 timeout in unrelated `scripts/setup-github-metadata.test.ts`).
 - **Notes:** Manual keyboard-only walkthrough, screen-reader spot checks, and responsive visual QA across all key states remain recommended to fully close Phase A.
 
+### A15. Follow-up static/manual QA audit and minor a11y fixes (2026-11-12)
+- **Files:** `components/chat/messages.tsx`, `docs/phases/PHASE_A.md`
+- **Changes (code-level QA):** marked decorative chat empty-state and scroll-to-bottom icons as `aria-hidden="true"` to reduce screen-reader noise; reviewed landmarks/labels/focus-visible/theme controls in chat and reviews for obvious regressions.
+- **Static checks:** `pnpm lint`/`pnpm build` pass on this increment; targeted app/route/component suites pass in environment (batched due to local Vitest pool flakiness).
+- **Manual QA status (still pending):** cannot complete true human manual QA in this environment. Recommended walkthrough remains: keyboard-only tab order and focus trapping/visibility across chat input, session controls, reviews filters/sort, decision/interrupt forms, and dialogs/links; screen-reader spot checks (NVDA/VoiceOver) for status/live regions and form labels; responsive visual QA (mobile/tablet/desktop) in light/dark across loading, streaming, suspended/resuming, empty, filtered-empty, error, and configured/unconfigured states. No deploy performed.
+
 ## Validation log
 
 | Date | Check | Command / Method | Result | Notes |

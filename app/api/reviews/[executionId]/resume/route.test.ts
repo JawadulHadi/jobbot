@@ -211,4 +211,22 @@ describe("POST /api/reviews/[executionId]/resume", () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({ error: "Network unavailable" });
   });
+
+  it("rejects malformed JSON bodies", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      new Request("http://localhost/api/reviews/execution-1/resume", {
+        method: "POST",
+        body: "{not json",
+      }),
+      { params: Promise.resolve({ executionId: "execution-1" }) }
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Invalid resume request." });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
