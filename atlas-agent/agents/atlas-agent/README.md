@@ -1,4 +1,4 @@
-# ya sure
+# atlas agent
 
 A minimal Atlas Agent Engine SDK starter for Google ADK 2.
 
@@ -36,7 +36,7 @@ Before you start the app, review the LLM builder in the agent source, plus `agen
 - Set `LLM_API_KEY` if you did not provide one during `agentengine create`
 - Leave `MONGODB_URI` empty for `agentengine dev`; set it only when running against
   your own MongoDB deployment
-- Review the LLM builder in `src/agent_ya_sure/llm.py`. To switch providers,
+- Review the LLM builder in `src/agent_atlas_agent/llm.py`. To switch providers,
   update the import, constructor, and `MODEL`; the key remains `LLM_API_KEY`.
 - To enable persistent profile memory, set `features.memory: true` in
   `agent.yaml` and set `VOYAGE_API_KEY`

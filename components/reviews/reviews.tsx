@@ -143,13 +143,19 @@ function ReviewCard({
         {review.session_id ? (
           <div>
             <dt className="text-xs text-muted-foreground">Session</dt>
-            <dd className="mt-1 break-all font-mono">{review.session_id}</dd>
+            <dd className="mt-1 break-all font-mono text-xs">{review.session_id}</dd>
           </div>
         ) : null}
         {review.created_at ? (
           <div>
             <dt className="text-xs text-muted-foreground">Submitted</dt>
             <dd className="mt-1">{new Date(review.created_at).toLocaleString()}</dd>
+          </div>
+        ) : null}
+        {review.updated_at ? (
+          <div>
+            <dt className="text-xs text-muted-foreground">Updated</dt>
+            <dd className="mt-1">{new Date(review.updated_at).toLocaleString()}</dd>
           </div>
         ) : null}
       </dl>
@@ -282,17 +288,31 @@ export function Reviews() {
   useEffect(() => {
     let stopped = false;
     let timer: number | undefined;
-    const poll = async () => {
-      await loadReviews();
-      if (!stopped) {
-        timer = window.setTimeout(() => void poll(), REVIEW_POLL_INTERVAL_MS);
+
+    const schedule = () => {
+      if (stopped) return;
+      timer = window.setTimeout(async () => {
+        if (!stopped && document.visibilityState !== "hidden") {
+          await loadReviews();
+        }
+        schedule();
+      }, REVIEW_POLL_INTERVAL_MS);
+    };
+
+    const onVisibilityChange = () => {
+      if (!stopped && document.visibilityState === "visible") {
+        void loadReviews();
       }
     };
-    void poll();
+
+    void Promise.resolve().then(() => loadReviews());
+    schedule();
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       stopped = true;
       if (timer !== undefined) window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       const request = activeRequest.current;
       activeRequest.current = null;
       request?.abort();
@@ -323,10 +343,13 @@ export function Reviews() {
               </div>
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">Human reviews</h1>
-                <p className="mt-0.5 text-sm text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground" aria-live="polite">
                   {loading && reviews.length === 0
                     ? "Checking for suspended executions…"
                     : `${reviews.length} suspended execution${reviews.length === 1 ? "" : "s"} awaiting review.`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Queue refreshes automatically. Submit a decision or continue an interrupt to resume the agent.
                 </p>
               </div>
             </div>

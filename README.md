@@ -1,24 +1,30 @@
 # Jobbot
 
-A Next.js chatbot and human-review UI for [Atlas Agent Engine](https://agentengine.mongodb.com). Same core idea as the Agent Engine chatbot starter, packaged and enhanced for a deployable “jobbot” experience: streaming chat, session continuity, and a workspace-scoped review queue.
+A branded Next.js chatbot and human-review UI for [Atlas Agent Engine](https://agentengine.mongodb.com). Jobbot provides streaming chat with session continuity, a suspend/resume human review queue, dark/light theming, and operational hardening—built for trustworthy, accountable AI-assisted workflows.
+
+> **Status:** Phase A/B in progress, Phase C initiated (scoping/readiness). **No deployment/promotion/push without explicit approval.******
 
 ## Features
 
 - **Streaming chat** via `/api/chat` with authoritative session handling and suspend/resume awareness.
-- **Conversation history** restore/polling and editable User/Session IDs.
-- **Human reviews** at `/reviews` for suspended executions (decision reviews and native interrupt resumes).
-- **Health/config check** at `/api/health`.
-- **Optional Basic Auth** for live deployments (`APP_BASIC_AUTH_USER` / `APP_BASIC_AUTH_PASSWORD`).
+- **Conversation history** restore/polling, editable User/Session IDs, and visibility-aware session refresh.
+- **Human reviews** at `/reviews` for suspended executions (decision reviews and native interrupt `resume_map` resumes), with visibility-aware queue refresh.
+- **Health/config check** at `/api/health` with in-app setup guidance (non-sensitive).
+- **Brand & UX baseline:** Jobbot identity, warm amber/brown accent, dark/light theme toggle (persisted + system fallback), polished empty/loading/error states.
+- **Accessibility baseline:** focus-visible styling, accessible labels, skip link/main landmarks, and status semantics (`aria-live` where appropriate).
+- **Observability-lite:** non-sensitive `X-Request-Id` headers on API responses.
+- **Optional Basic Auth** for simple gating (`APP_BASIC_AUTH_USER` / `APP_BASIC_AUTH_PASSWORD`).
 
 ## Prerequisites
 
 - Node.js 18+ (Node 22 recommended)
-- [pnpm](https://pnpm.io/installation) (or use `npx pnpm@10.24.0 ...`)
+- [pnpm](https://pnpm.io/installation) (or use `npx -y pnpm@10.24.0 ...`)
 - An Atlas Agent Engine workspace (deployed) or a local agent via `agentengine dev up`
 
 ## Quick start
 
 1. **Install dependencies**
+
    ```bash
    pnpm install
    ```
@@ -30,10 +36,12 @@ A Next.js chatbot and human-review UI for [Atlas Agent Engine](https://agentengi
    - Optional: `APP_BASIC_AUTH_USER` / `APP_BASIC_AUTH_PASSWORD` to protect the app when deployed.
 
 3. **Run locally**
+****
    ```bash
    pnpm dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) (chat) and [http://localhost:3000/reviews](http://localhost:3000/reviews).
+
+   Open [http://localhost:3000](http://localhost:3000) (chat), [http://localhost:3000/reviews](http://localhost:3000/reviews), and [http://localhost:3000/api/health](http://localhost:3000/api/health).
 
 ## Scripts
 
@@ -45,37 +53,64 @@ A Next.js chatbot and human-review UI for [Atlas Agent Engine](https://agentengi
 
 ## Project structure
 
-```
+```text
 app/
   api/chat/           — message and session-history proxies
   api/reviews/        — review list and resume proxies
   api/health/         — config/health endpoint
   page.tsx            — chat
   reviews/page.tsx    — human review queue
-components/           — chat, reviews, UI primitives
-lib/                  — Agent Engine API/auth, session & review helpers
+components/           — chat, reviews, theme toggle, UI primitives
+lib/                  — Agent Engine API/auth, session & review helpers, request IDs
 middleware.ts         — optional HTTP Basic Auth when env vars are set
+docs/                 — roadmap, phase logs, release/governance, wiki drafts
 ```
 
-## Deploy (make live)
+## Documentation
+
+- **Roadmap & phases:** [`docs/BRAND_AND_ROADMAP.md`](docs/BRAND_AND_ROADMAP.md), [`docs/phases/PHASE_A.md`](docs/phases/PHASE_A.md), [`docs/phases/PHASE_B.md`](docs/phases/PHASE_B.md), [`docs/phases/PHASE_C.md`](docs/phases/PHASE_C.md)
+- **Release & governance:** [`CHANGELOG.md`](CHANGELOG.md), [`RELEASE_NOTES.md`](RELEASE_NOTES.md), [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md), [`docs/releases/`](docs/releases/)
+- **Contributing & workflow:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Production deployment preparation:** [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md), CI workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- **Repository metadata (description/topics/labels/milestones/tags):** [`docs/REPOSITORY_METADATA.md`](docs/REPOSITORY_METADATA.md)
+- **Wiki drafts (publish to GitHub Wiki with approval):** [`docs/wiki/`](docs/wiki/)
+
+## Release, tags & milestones (practice)
+
+- **Versioning:** Semantic Versioning with annotated git tags `vX.Y.Z` on merged, validated `main` commits only (**approval required**).
+- **Phases as milestones:** Phase A (Brand & UI Polish), Phase B (Strengthen Existing Implementations), Phase C (New Implementations), plus Release & Governance / Hotfix as needed.
+- **Every build/phase increment must update:** changelog, release notes, tags/registry plan, phase docs, README/wiki, and repo metadata (description/topics/labels/milestones) with recorded validation.
+- **Git workflow:** reconcile with `origin/main`, work on a **new branch per logical change**, make **atomic commits** (Conventional Commits recommended), open a **PR** with milestone/labels/validation/docs checklist, and merge/tag only with approval. (Prefer atomic, reviewable commits; avoid direct commits to `main`.)
+
+See [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md) for full details.
+
+## Deploy (when approved)
 
 ### Vercel (recommended for Next.js)
-1. Push this repo to GitHub (`https://github.com/JawadulHadi/jobbot.git`).
+
+1. Push this repo to GitHub (`https://github.com/JawadulHadi/jobbot.git`) **only with approval**.
 2. Import the project in [Vercel](https://vercel.com/new).
 3. Set **Environment Variables**: `MONGODB_AGENTIC_API_URL`, and for deployed endpoints `MONGODB_AGENTIC_CLIENT_ID`, `MONGODB_AGENTIC_CLIENT_SECRET`. Optionally set `APP_BASIC_AUTH_USER`/`APP_BASIC_AUTH_PASSWORD`.
-4. Deploy (build command `pnpm build`, install `pnpm install`).
+4. Deploy (build `pnpm build`, install `pnpm install`) **only with approval**.
 
 ### Other hosts (Render, Railway, Fly.io, etc.)
+
 - Build: `pnpm install && pnpm build`
 - Start: `pnpm start` (respect `PORT` if provided)
 - Configure the same environment variables and enable HTTPS.
 
 ## Security notes
 
-- Service-account secrets and access tokens stay in server-side route handlers.
+- Service-account secrets and access tokens stay in server-side route handlers; request IDs are non-sensitive.
 - **This app does not include full end-user authentication/authorization by default.** Enable Basic Auth for a simple gate and/or add proper app auth and authorization to chat and review routes before any public production use.
-- Do not commit `.env.local` or secrets.
+- Do not commit `.env.local`, credentials, or tokens.
 
 ## How it works
 
-The UI sends messages to `/api/chat`, which forwards them to the Atlas Agent Engine streaming endpoint and pipes SSE chunks back via the Vercel AI SDK. The server preserves `X-Session-ID` for session continuity. `/api/reviews` exposes suspended executions and supports decision resumes and native interrupt `resume_map` flows.
+The UI sends messages to `/api/chat`, which forwards them to the Atlas Agent Engine streaming endpoint and pipes SSE chunks back via the Vercel AI SDK. The server preserves `X-Session-ID` for session continuity. `/api/reviews` exposes suspended executions and supports decision resumes and native interrupt `resume_map` flows. API responses include `X-Request-Id` for traceability, and polling is visibility-aware to reduce unnecessary background requests.
+
+## Repository
+
+- **Origin:** <https://github.com/JawadulHadi/jobbot.git>
+- **Description/topics/milestones/labels/tags:** see [`docs/REPOSITORY_METADATA.md`](docs/REPOSITORY_METADATA.md) (apply via GitHub with approval)
+- **Current local note:** working changes and git reconciliation may be required before branching/PR/tag actions; see [`RELEASE_NOTES.md`](RELEASE_NOTES.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).

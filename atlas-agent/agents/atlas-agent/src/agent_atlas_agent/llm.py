@@ -1,4 +1,4 @@
-"""LLM provider selection for ya sure."""
+"""LLM provider selection for atlas agent."""
 
 from __future__ import annotations
 

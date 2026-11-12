@@ -373,7 +373,7 @@ export function Chat() {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 href="/reviews"
               >
                 <ShieldCheckIcon className="size-3.5 text-[var(--brand)]" />
@@ -450,8 +450,9 @@ export function Chat() {
             <div
               className="mb-2 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/5 px-3 py-2 text-sm text-foreground"
               role="status"
+              aria-live="polite"
             >
-              <p className="font-medium text-[var(--brand)]">Setup needed</p>
+              <p className="font-medium text-foreground">Setup needed</p>
               <p className="mt-0.5 text-muted-foreground">{configNotice}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Check <code className="font-mono">/api/health</code> and update{" "}

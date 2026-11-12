@@ -1,4 +1,4 @@
-"""Tool definitions for ya sure."""
+"""Tool definitions for atlas agent."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ def register(app: App) -> None:
         result = app.memory.save_semantic(
             text=f"User {info_key}: {info_value}",
             label=f"{user_id}_{info_key}",
-            source="agent_ya_sure",
+            source="agent_atlas_agent",
             metadata={"type": "user_info", "info_key": info_key},
             user_id=user_id,
         )

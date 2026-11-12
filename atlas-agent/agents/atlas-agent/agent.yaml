@@ -1,10 +1,10 @@
 # Human-readable app slug used by Agent Engine tooling.
 # `agentengine create` should rewrite this when generating a new app from the template.
-name: ya-sure
+name: atlas-agent
 # Python import path to the SDK App instance.
 # Format: <module path>:<variable name>. This template exposes `app` from
-# src/agent_ya_sure/main.py.
-entrypoint: agent_ya_sure.main:app
+# src/agent_atlas_agent/main.py.
+entrypoint: agent_atlas_agent.main:app
 framework: adk
 # Runtime feature flags controlled by agent.yaml, not .env. A key that is
 # present here wins over any ENABLE_* environment variable, so declaring memory
