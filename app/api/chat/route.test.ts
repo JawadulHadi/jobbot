@@ -187,4 +187,47 @@ describe("POST /api/chat", () => {
     expect(body).toContain("connection was interrupted");
     expect(response.headers.get("X-Request-Id")).toBeTruthy();
   });
+
+  it("returns a stream error when upstream response has no body", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+
+    const response = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", parts: [{ type: "text", text: "Hi" }] }] }),
+      })
+    );
+
+    await expect(response.text()).resolves.toContain("something went wrong");
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+  });
+
+  it("ignores unsafe session and thread ids", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    const upstream = new Response('data: {"chunk_type":"text","content":"Hello"}\n\n', {
+      headers: { "Content-Type": "text/event-stream" },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(upstream);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", parts: [{ type: "text", text: "Hi" }] }],
+          session_id: "../bad",
+          thread_id: "bad space",
+        }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(init.body as string);
+    expect(body.session_id).toBeUndefined();
+    expect(body.thread_id).toBeUndefined();
+  });
 });
