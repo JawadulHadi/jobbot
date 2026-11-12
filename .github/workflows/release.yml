@@ -1,0 +1,120 @@
+name: Release (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create (e.g. v0.2.0). Must follow vX.Y.Z."
+        required: true
+        type: string
+      target:
+        description: "Target branch/commit (default: main)"
+        required: false
+        default: main
+        type: string
+      create_github_release:
+        description: "Create a GitHub Release after tagging (requires contents:write permissions and approval)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-prepare:
+    name: Validate release readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target }}
+          fetch-depth: 0
+
+      - name: Validate tag format
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.tag }}"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid tag format: $TAG (expected vX.Y.Z or vX.Y.Z-prerelease)" >&2
+            exit 1
+          fi
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag already exists: $TAG" >&2
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Release checklist summary
+        shell: bash
+        run: |
+          {
+            echo "## Release preparation summary"
+            echo "- Tag requested: \`${{ inputs.tag }}\`"
+            echo "- Target: \`${{ inputs.target }}\`"
+            echo "- Quality checks: lint/test/build passed on workflow runner"
+            echo ""
+            echo "## Manual approval gates (required)"
+            echo "- Confirm CHANGELOG/RELEASE_NOTES/phase docs/README/wiki/metadata are updated"
+            echo "- Confirm PRs merged and CI green on target commit"
+            echo "- Create/push annotated tag and GitHub Release only with explicit approval"
+            echo "- Deploy only with explicit approval and required secrets configured"
+            echo ""
+            echo "If \`create_github_release\` is true, ensure workflow permissions and token allow tag/release creation (may require \`contents: write\`)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  create-release:
+    name: Create tag and GitHub Release (approval-gated)
+    needs: validate-and-prepare
+    if: ${{ inputs.create_github_release }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target }}
+          fetch-depth: 0
+
+      - name: Create and push tag, then create release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG" "$TARGET"
+          git push origin "$TAG"
+          # Create GitHub Release (draft=false). Ensure release notes/docs are prepared before running.
+          gh release create "$TAG" --title "$TAG" --generate-notes

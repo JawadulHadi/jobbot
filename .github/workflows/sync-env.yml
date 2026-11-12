@@ -1,0 +1,68 @@
+name: Env & Secrets Helper
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Optional GitHub Environment name to inspect (e.g. production)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check-env-config:
+    name: Check required secrets/variables
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Report required configuration
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_ENV: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          echo "## Required GitHub configuration for Jobbot" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This workflow is a helper for future env/secret maintenance. It documents required keys and, when permissions allow, checks presence (names only)." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Secrets (sensitive)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- MONGODB_AGENTIC_CLIENT_ID (required for deployed Agent Engine endpoints)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- MONGODB_AGENTIC_CLIENT_SECRET (required for deployed Agent Engine endpoints)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- APP_BASIC_AUTH_USER (optional interim gate; set with password)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- APP_BASIC_AUTH_PASSWORD (optional interim gate; set with user)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- OPENAI_API_KEY (optional; only if used by your agent/runtime)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Variables (non-secret config)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- MONGODB_AGENTIC_API_URL (required)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Local sync script" >> "$GITHUB_STEP_SUMMARY"
+          echo "Use \`scripts/sync-github-env.ps1\` from an admin machine with \`gh auth login\` to sync values from a local .env file (never commit secrets)." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Attempting read-only presence checks (may be limited by token permissions)..."
+          if gh secret list >/tmp/secrets.txt 2>/tmp/secrets.err; then
+            echo "### Detected repository secrets (names only)" >> "$GITHUB_STEP_SUMMARY"
+            awk '{print "- " $1}' /tmp/secrets.txt >> "$GITHUB_STEP_SUMMARY" || true
+          else
+            echo "- Could not list secrets with GITHUB_TOKEN (insufficient permissions or not available). Use an admin token or check in Settings." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if gh variable list >/tmp/vars.txt 2>/tmp/vars.err; then
+            echo "### Detected repository variables" >> "$GITHUB_STEP_SUMMARY"
+            awk '{print "- " $1}' /tmp/vars.txt >> "$GITHUB_STEP_SUMMARY" || true
+          else
+            echo "- Could not list variables with GITHUB_TOKEN." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ -n "${TARGET_ENV}" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Environment-scoped checks for '${TARGET_ENV}' may require elevated permissions; verify in Settings > Environments." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "Helper check completed. Review Settings > Secrets and variables > Actions (and Environments if applicable)."

@@ -30,10 +30,10 @@ A branded Next.js chatbot and human-review UI for [Atlas Agent Engine](https://a
    ```
 
 2. **Configure environment**
-   Copy `.env.example` to `.env.local` and set:
+   Copy `.env.example` to `.env.local` and set values (never commit secrets). See [`docs/ENV_AND_SECRETS.md`](docs/ENV_AND_SECRETS.md) for key definitions, GitHub secrets/variables sync, and deployment configuration.
    - `MONGODB_AGENTIC_API_URL` – workspace `.../invokeStream` URL, or local `http://localhost:<playground-port>/invoke/stream` from `agentengine dev up` (use the **playground UI** port).
    - `MONGODB_AGENTIC_CLIENT_ID` / `MONGODB_AGENTIC_CLIENT_SECRET` – required for deployed endpoints (service account with `AGENT_DEVELOPER`); leave blank for local proxy without auth.
-   - Optional: `APP_BASIC_AUTH_USER` / `APP_BASIC_AUTH_PASSWORD` to protect the app when deployed.
+   - Optional: `APP_BASIC_AUTH_USER` / `APP_BASIC_AUTH_PASSWORD` to protect the app when deployed (interim gate only).
 
 3. **Run locally**
 ****
@@ -70,8 +70,9 @@ docs/                 — roadmap, phase logs, release/governance, wiki drafts
 
 - **Roadmap & phases:** [`docs/BRAND_AND_ROADMAP.md`](docs/BRAND_AND_ROADMAP.md), [`docs/phases/PHASE_A.md`](docs/phases/PHASE_A.md), [`docs/phases/PHASE_B.md`](docs/phases/PHASE_B.md), [`docs/phases/PHASE_C.md`](docs/phases/PHASE_C.md)
 - **Release & governance:** [`CHANGELOG.md`](CHANGELOG.md), [`RELEASE_NOTES.md`](RELEASE_NOTES.md), [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md), [`docs/releases/`](docs/releases/)
+- **Environment & secrets:** [`docs/ENV_AND_SECRETS.md`](docs/ENV_AND_SECRETS.md), [`scripts/sync-github-env.ps1`](scripts/sync-github-env.ps1), [`.github/workflows/sync-env.yml`](.github/workflows/sync-env.yml)
 - **Contributing & workflow:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- **Production deployment preparation:** [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md), CI workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- **Production deployment preparation:** [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md), CI workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml), release helper [`.github/workflows/release.yml`](.github/workflows/release.yml)
 - **Repository metadata (description/topics/labels/milestones/tags):** [`docs/REPOSITORY_METADATA.md`](docs/REPOSITORY_METADATA.md)
 - **Wiki drafts (publish to GitHub Wiki with approval):** [`docs/wiki/`](docs/wiki/)
 
@@ -84,20 +85,23 @@ docs/                 — roadmap, phase logs, release/governance, wiki drafts
 
 See [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md) for full details.
 
-## Deploy (when approved)
+## Deploy (recommended path)
 
-### Vercel (recommended for Next.js)
+**Best default for this Next.js app: [Vercel](https://vercel.com/)** — managed Node/edge-compatible hosting, first-class Next.js support, easy environment variable/secret management, preview deployments, HTTPS, and simple rollbacks. Use Vercel unless you have a specific need for self-hosting/containers.
 
-1. Push this repo to GitHub (`https://github.com/JawadulHadi/jobbot.git`) **only with approval**.
-2. Import the project in [Vercel](https://vercel.com/new).
-3. Set **Environment Variables**: `MONGODB_AGENTIC_API_URL`, and for deployed endpoints `MONGODB_AGENTIC_CLIENT_ID`, `MONGODB_AGENTIC_CLIENT_SECRET`. Optionally set `APP_BASIC_AUTH_USER`/`APP_BASIC_AUTH_PASSWORD`.
-4. Deploy (build `pnpm build`, install `pnpm install`) **only with approval**.
+### Vercel (recommended)
+1. Ensure code is merged/approved for release and CI is green on the target commit.
+2. Import/connect `JawadulHadi/jobbot` in Vercel.
+3. Configure environment variables/secrets (`MONGODB_AGENTIC_API_URL`, `MONGODB_AGENTIC_CLIENT_ID`, `MONGODB_AGENTIC_CLIENT_SECRET`, optional `APP_BASIC_AUTH_*`) in Vercel project settings (use `docs/ENV_AND_SECRETS.md` and `scripts/sync-github-env.ps1` for GitHub-side config where applicable).
+4. Deploy/redeploy with approval. Build: `pnpm build`, Install: `pnpm install`.
 
-### Other hosts (Render, Railway, Fly.io, etc.)
+### Docker / self-hosted (portable alternative)
+- A production `Dockerfile` (standalone output) and `.dockerignore` are included.
+- Build: `docker build -t jobbot .`
+- Run: `docker run --rm -p 3000:3000 -e MONGODB_AGENTIC_API_URL=... -e MONGODB_AGENTIC_CLIENT_ID=... -e MONGODB_AGENTIC_CLIENT_SECRET=... jobbot`
+- Suitable for Render, Railway, Fly.io, Kubernetes, or any container platform. Configure HTTPS, secrets, and health checks (`/api/health`) per platform.
 
-- Build: `pnpm install && pnpm build`
-- Start: `pnpm start` (respect `PORT` if provided)
-- Configure the same environment variables and enable HTTPS.
+See [`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md) for readiness checklist and operational notes. No deploy/push/tag/release without explicit approval.
 
 ## Security notes
 
