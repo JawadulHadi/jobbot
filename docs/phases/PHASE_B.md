@@ -11,7 +11,7 @@
 - [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in chat/reviews client flows and JSON API route catch paths for normalized user-friendly network/timeout fallback messages; shared `fetchWithRetry` added for history/reviews/resume upstream calls. Further route error-shape/status standardization and chat streaming error contract refinements pending).
 - [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews and chat session background polling now use exponential backoff on consecutive failures (capped) with reset on success/visibility/manual actions. Deeper restore/history edge cases pending.
 - [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sort, clearer submission/success/filter-empty states; further prioritization/audit cues pending).
-- [ ] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI.
+- [~] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI — progressed (added proxy/health route tests, api-errors/fetch-retry unit tests, and expanded chat streaming/history/reviews route coverage; CI workflow and Vitest config hardened). Further end-to-end/edge-case coverage pending.
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` headers added.
 
 ## Parallel workstreams
@@ -102,8 +102,18 @@
 - Observability additions must remain non-sensitive (no secrets/tokens in IDs or payloads).
 - Polling improvements should reduce unnecessary work without delaying recovery.
 
+### B8. Expanded tests and CI hardening — 2026-11-12
+
+- **Files:** `proxy.test.ts`, `app/api/health/route.test.ts`, `app/api/chat/route.test.ts`, `app/api/chat/history/route.test.ts`, `app/api/reviews/route.test.ts`, `lib/api-errors.test.ts`, `lib/fetch-with-retry.test.ts`, `vitest.config.mts`, `.github/workflows/ci.yml`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:**
+  - Added proxy basic-auth tests and health route tests (config/validation/request-id behavior).
+  - Expanded chat route tests (invalid body/empty message, upstream non-ok/network error stream responses, interrupted stream handling) and added history/reviews route tests for normalized network-failure responses.
+  - Added unit tests for `normalizeApiErrorMessage`/`isAbortError` and `fetchWithRetry` behavior (success, 5xx/network retry, no retry on 4xx).
+  - Hardened CI workflow with read-only permissions and concurrency cancellation; tightened Vitest discovery with explicit include/exclude patterns.
+- **Validation:** `pnpm lint` pass; `pnpm build` pass. Targeted tests for changed/new suites passed (36/36 across 8 files). Full `pnpm test` run in this environment reported unrelated `scripts/setup-github-metadata.test.ts` pwsh timeouts and one transient `components/reviews/reviews.test.tsx` timeout under load (re-run of reviews suite passed: 7/7).
+
 ## Open items / blockers
 
-- Next increments: structured client-facing error mapping improvements, polling/backoff strategy refinement, reviews filtering/sorting/submission feedback, and expanded automated/CI coverage.
+- Next increments: deeper reviews prioritization/audit/outcome tracking, further streaming/history/reviews edge-case and proxy-integration coverage, and continued CI/reliability tuning.
 - Atlas Agent naming standardized in-repo (`atlas-agent/agents/atlas-agent/`); confirm external/backend labels match if applicable.
 - No deployment/push without approval.
