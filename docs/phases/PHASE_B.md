@@ -134,10 +134,17 @@
 
 ### B11. Streaming edge-case coverage follow-up — 2026-11-13
 
-- **Files:** `app/api/chat/route.test.ts`, `docs/phases/PHASE_B.md`
+- **Files:** `app/api/chat/route.test.ts`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
 - **Changes:** Added chat route tests for empty/no-body upstream responses, unsafe session/thread ID filtering, and streams that complete without content or suspension (fallback response) to strengthen streaming/error-path coverage.
 - **Validation:** `pnpm lint` pass; `pnpm exec vitest run app/api/chat/route.test.ts` pass (9/9).
 - **Notes:** Continues Phase B quality hardening on a new branch/PR from updated `main`; no deploy/tag/release/merge without explicit approval.
+
+### B12. Reviews API edge-case coverage follow-up — 2026-11-13
+
+- **Files:** `app/api/reviews/route.test.ts`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:** Added reviews route tests for invalid target configuration (500 with request ID, no upstream call) and malformed upstream payload normalization to an empty reviews list.
+- **Validation:** `pnpm lint` pass; `pnpm exec vitest run app/api/reviews/route.test.ts` pass (7/7).
+- **Notes:** Incremental Phase B reliability/coverage hardening; no deploy/tag/release/merge without explicit approval.
 
 ## Open items / blockers
 

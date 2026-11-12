@@ -110,4 +110,29 @@ describe("GET /api/reviews", () => {
     expect(body.error).toContain("Network error");
     expect(response.headers.get("X-Request-Id")).toBeTruthy();
   });
+
+  it("returns a configuration error with request id for invalid targets", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://example.com/invoke/stream";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await GET();
+
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.error).toContain("must use https");
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("normalizes malformed upstream payloads to an empty reviews list", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ unexpected: true })));
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ reviews: [], count: 0 });
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+  });
 });
