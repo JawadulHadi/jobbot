@@ -26,7 +26,9 @@ $desiredMilestones = @(
   @{ title = "Hotfix / Patch"; description = "Urgent corrective releases. Targeted fixes + regression validation. Exit: patch released/tagged with notes and verification." }
 )
 
-$existingMilestones = gh api "repos/$Repo/milestones?state=all&per_page=100" | ConvertFrom-Json
+$milestonePages = gh api "repos/$Repo/milestones?state=all&per_page=100" --paginate --slurp
+if ($LASTEXITCODE -ne 0) { throw "Failed to list milestones" }
+$existingMilestones = $milestonePages | ConvertFrom-Json | ForEach-Object { $_ }
 foreach ($m in $desiredMilestones) {
   $found = $existingMilestones | Where-Object { $_.title -eq $m.title }
   if ($found) {
@@ -60,7 +62,9 @@ $desiredLabels = @(
   @{ name="security"; color="ee0701"; description="Security-sensitive change" }
 )
 
-$existingLabels = gh label list --repo $Repo --limit 200 --json name | ConvertFrom-Json
+$labelPages = gh api "repos/$Repo/labels?per_page=100" --paginate --slurp
+if ($LASTEXITCODE -ne 0) { throw "Failed to list labels" }
+$existingLabels = $labelPages | ConvertFrom-Json | ForEach-Object { $_ }
 $existingNames = @($existingLabels | ForEach-Object { $_.name })
 foreach ($l in $desiredLabels) {
   if ($existingNames -contains $l.name) {
@@ -78,7 +82,7 @@ $topics = @("nextjs","react","typescript","chatbot","ai-assistant","atlas-agent-
 
 Write-Host "Updating repository description/topics"
 if (-not $DryRun) {
-  gh api --method PATCH "repos/$Repo" -f description="$desc" | Out-Null
+  Invoke-GH @("api", "--method", "PATCH", "repos/$Repo", "-f", "description=$desc") | Out-Null
   $topicArgs = @("api", "--method", "PUT", "repos/$Repo/topics", "-H", "Accept: application/vnd.github+json")
   foreach ($t in $topics) { $topicArgs += @("-f", "names[]=$t") }
   & gh @topicArgs | Out-Null
