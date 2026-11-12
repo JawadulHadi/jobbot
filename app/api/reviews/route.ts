@@ -6,6 +6,8 @@ import {
   readUpstreamError,
   LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE,
 } from "@/lib/agent-engine-api";
+import { normalizeApiErrorMessage } from "@/lib/api-errors";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 import { withRequestId } from "@/lib/request-id";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +16,14 @@ export async function GET() {
   const headers = withRequestId();
   try {
     const target = getAgentEngineTarget(process.env.MONGODB_AGENTIC_API_URL);
-    const response = await fetch(target.reviewsUrl, {
-      headers: await getAgentEngineHeaders(target),
-      cache: "no-store",
-    });
+    const response = await fetchWithRetry(
+      target.reviewsUrl,
+      {
+        headers: await getAgentEngineHeaders(target),
+        cache: "no-store",
+      },
+      { retries: 2, baseDelay: 300 }
+    );
 
     if (!response.ok) {
       return Response.json(
@@ -34,7 +40,9 @@ export async function GET() {
     return Response.json({ reviews, count: reviews.length }, { headers });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Unable to load reviews." },
+      {
+        error: normalizeApiErrorMessage(error, "Unable to load reviews."),
+      },
       { status: 500, headers }
     );
   }

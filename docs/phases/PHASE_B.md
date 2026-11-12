@@ -8,8 +8,8 @@
 
 ## Scope / progress
 
-- [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in reviews and chat client flows for normalized messages/abort handling; broader route-level normalization and shared API error shapes still pending).
-- [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews background polling now uses exponential backoff on consecutive failures with reset on success/visibility/manual refresh. Chat polling/backoff and deeper restore edge cases pending.
+- [~] Harden API error mapping and user-facing messages (config/auth/network/upstream) with consistent UX — progressed (`lib/api-errors.ts` helpers now used in chat/reviews client flows and JSON API route catch paths for normalized user-friendly network/timeout fallback messages; shared `fetchWithRetry` added for history/reviews/resume upstream calls. Further route error-shape/status standardization and chat streaming error contract refinements pending).
+- [~] Improve session/history UX (restore states, polling/backoff, edge-case handling) — visibility-aware polling in chat and reviews; reviews and chat session background polling now use exponential backoff on consecutive failures (capped) with reset on success/visibility/manual actions. Deeper restore/history edge cases pending.
 - [~] Reviews UX refinements (filtering/sorting cues, timestamps/context readability, submission feedback) — progressed (search/filter, sort, clearer submission/success/filter-empty states; further prioritization/audit cues pending).
 - [ ] Expand automated tests for streaming, history, and review flows; keep lint/build green in CI.
 - [~] Optional: simple request logging/trace IDs for easier debugging (no sensitive data) — `X-Request-Id` headers added.
@@ -76,6 +76,16 @@
   - Adopted `normalizeApiErrorMessage`/`isAbortError` in chat history/config flows and reviews load/submit flows for consistent, user-friendly error handling and safe abort behavior.
   - Added exponential backoff for reviews background polling on consecutive load failures (capped), with reset on successful load, visibility regain, and manual refresh.
   - Preserved existing contracts, UI states, and accessibility semantics.
+- **Validation:** `pnpm lint` pass; `pnpm test` pass (81/81, 11 files); `pnpm build` pass. Manual end-to-end QA against a live backend remains pending.
+
+### B7. Route-level error normalization/retry and chat session polling backoff — 2026-11-12
+
+- **Files:** `lib/api-errors.ts`, `lib/fetch-with-retry.ts`, `app/api/chat/route.ts`, `app/api/chat/history/route.ts`, `app/api/reviews/route.ts`, `app/api/reviews/[executionId]/resume/route.ts`, `components/chat/chat.tsx`, `components/chat/chat.test.tsx`, `docs/phases/PHASE_B.md`, `CHANGELOG.md`
+- **Changes:**
+  - Refined `normalizeApiErrorMessage` to preserve specific/custom upstream messages while normalizing low-level network/timeout failures.
+  - Added shared server-side `fetchWithRetry` helper and applied retry/backoff to chat history, reviews list, and review resume upstream fetches; chat route now uses shared retry helper.
+  - Normalized catch-path error responses in JSON API routes using consistent `{ error }` payloads and safe fallbacks.
+  - Refactored chat suspended/resuming session polling to recursive `setTimeout` with exponential backoff on consecutive background restore failures (capped), reset on success/visibility/session changes; updated chat test for timer strategy.
 - **Validation:** `pnpm lint` pass; `pnpm test` pass (81/81, 11 files); `pnpm build` pass. Manual end-to-end QA against a live backend remains pending.
 
 ## Validation log

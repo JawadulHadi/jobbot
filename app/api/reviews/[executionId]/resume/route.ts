@@ -7,6 +7,8 @@ import {
   readUpstreamErrorDetails,
   LOCAL_REVIEW_API_UNAVAILABLE_MESSAGE,
 } from "@/lib/agent-engine-api";
+import { normalizeApiErrorMessage } from "@/lib/api-errors";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 import { isRecord, type ResumeReviewRequest } from "@/lib/reviews";
 import { withRequestId } from "@/lib/request-id";
 
@@ -87,14 +89,18 @@ export async function POST(
             session_id: body.session_id,
             resume_map: body.resume_map,
           };
-    const response = await fetch(upstreamUrl, {
-      method: "POST",
-      headers: await getAgentEngineHeaders(
-        target,
-        body.type === "interrupt" ? body.session_id : undefined
-      ),
-      body: JSON.stringify(upstreamBody),
-    });
+    const response = await fetchWithRetry(
+      upstreamUrl,
+      {
+        method: "POST",
+        headers: await getAgentEngineHeaders(
+          target,
+          body.type === "interrupt" ? body.session_id : undefined
+        ),
+        body: JSON.stringify(upstreamBody),
+      },
+      { retries: 1, baseDelay: 300 }
+    );
 
     if (!response.ok) {
       // Only the decision branch calls a review endpoint; interrupts go to invoke,
@@ -116,7 +122,9 @@ export async function POST(
     return Response.json({ success: true, result }, { headers });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Unable to resume review." },
+      {
+        error: normalizeApiErrorMessage(error, "Unable to resume review."),
+      },
       { status: 500, headers }
     );
   }
