@@ -2,18 +2,12 @@
 
 **Status:** Initiated (scoping/readiness; implementation pending approvals)  
 **Deployment:** Not approved / do not deploy  
-<<<<<<< Updated upstream
-**Objective:** Deliver higher-value capabilities on top of a stable, branded foundation.
-
-## Scope / progress
-=======
 **Started:** 2026-11-11  
 **Last updated:** 2026-11-12  
 **Objective:** Deliver higher-value capabilities on top of a stable, branded foundation.
 
 ## Scope / progress
 
->>>>>>> Stashed changes
 - [ ] Proper app authentication & authorization (required before public/live use) with role-aware access to chat/reviews.
 - [ ] Session management: history/sidebar, rename, search, and shareable deep links (with access controls).
 - [ ] Conversation quality: message actions (copy/regenerate where supported), richer rendering, attachments if agent supports.
@@ -21,33 +15,6 @@
 - [ ] Observability & ops: health/readiness details (non-secret), metrics, alerting, rate limiting/abuse protection.
 - [ ] Brand assets package: logo variants, color/type tokens, usage guidelines.
 
-<<<<<<< Updated upstream
-## Parallel workstreams
-| Workstream | Actions | Status | Notes |
-|---|---|---|---|
-| Authz | Design/implement access control for UI and APIs | Scoping | Prerequisite for public exposure; requires approved approach |
-| Sessions | Persistent/session UX enhancements | Scoping | Depends on storage/auth decisions |
-| Conversation | UX/features aligned with agent capabilities | Scoping | Capability-driven; avoid unsupported claims |
-| Reviews ops | Workflow and visibility improvements | Scoping | Build on existing queue |
-| Ops/brand system | Monitoring, protection, formal brand assets | Scoping | Production-readiness focus |
-
-## Change log
-| Date | Item | Files | Summary | Validation | Notes |
-|---|---|---|---|---|---|
-| 2026-11-11 | C0. Phase initiation (documentation/scoping) | `docs/phases/PHASE_C.md`, `docs/BRAND_AND_ROADMAP.md` | Marked Phase C as initiated for scoping/readiness while deferring implementation until priorities, architecture choices (auth/storage/integrations), and approvals are confirmed. No runtime behavior changes. | N/A (documentation) | Prevents premature implementation of high-impact features without approved requirements |
-
-## Validation log
-| Date | Check | Command | Result | Notes |
-|---|---|---|---|---|
-| 2026-11-11 | Documentation consistency | Manual review | Pass | Phase C status aligned with "start pending phases" (scoped initiation) and approval constraints |
-
-## Decisions & assumptions
-- Phase C work that impacts security, data persistence, or external integrations will only be implemented with explicit scoping and approval.
-- Interim live protection remains limited to optional Basic Auth already available; full authz is a Phase C priority.
-
-## Open items / blockers
-- Approved auth strategy/provider, data model/storage for sessions/reviews metadata, target integrations, and rollout plan.
-=======
 ## Parallel workstreams (scoping)
 
 | Workstream         | Actions                                              | Status  | Notes                                                                         |
@@ -63,7 +30,7 @@
 | Date       | Item                                     | Files                                                                                                     | Summary                                                                                                                                                                                                            | Validation          | Notes                                                                |
 | ---------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------- |
 | 2026-11-11 | C0. Phase initiation (scoping/readiness) | `docs/phases/PHASE_C.md`, `docs/BRAND_AND_ROADMAP.md`                                                     | Marked Phase C as initiated for scoping/readiness while deferring implementation pending priorities, architecture choices, and approvals. No runtime behavior changes.                                             | N/A (documentation) | Prevents premature high-impact changes without approved requirements |
-| 2026-11-12 | C0.1 Scoping context refresh             | `docs/phases/PHASE_C.md`, `docs/BRAND_AND_ROADMAP.md`, `docs/phases/PHASE_A.md`, `docs/phases/PHASE_B.md` | Reconfirmed Phase C scope/dependencies alongside Phase A/B progress (branding, theme toggle, a11y baseline, request IDs, polling/UX refinements, recovery). Implementation remains blocked on approvals/decisions. | N/A (documentation) | Ensures all phases remain fully documented and aligned               |
+| 2026-11-12 | C0.1 Scoping context refresh             | `docs/phases/PHASE_C.md`, `docs/BRAND_AND_ROADMAP.md`, `docs/phases/PHASE_A.md`, `docs/phases/PHASE_B.md` | Reconfirmed Phase C scope/dependencies alongside Phase A/B progress (branding, theme toggle, a11y baseline, request IDs, polling/UX refinements, recovery, Atlas Agent rename, production prep). Implementation remains blocked on approvals/decisions. | N/A (documentation) | Ensures all phases remain fully documented and aligned               |
 
 ## Decisions & assumptions
 
@@ -77,5 +44,4 @@
 - Data/storage decisions for sessions/reviews metadata and retention.
 - Target integrations/notifications and observability stack choices.
 - Deployment target/approval and production security requirements.
-- Clarification of “atlas-agent agent” naming source (repo vs backend/platform) for consistent branding.
->>>>>>> Stashed changes
+- Confirm any external/backend Agent Engine naming/labels match standardized Atlas Agent naming.

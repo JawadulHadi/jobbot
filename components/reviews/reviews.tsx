@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { RefreshCwIcon, ShieldCheckIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FilterIcon, RefreshCwIcon, SearchIcon, ShieldCheckIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   REVIEW_POLL_INTERVAL_MS,
   getPendingInterrupts,
@@ -13,7 +13,10 @@ import {
   type ResumeReviewRequest,
 } from "@/lib/reviews";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+type SortMode = "updated_desc" | "updated_asc" | "created_desc" | "created_asc";
 
 function allowedDecisions(review: PendingReview): string[] {
   const decisions = review.suspend_context?.allowed_decisions;
@@ -42,6 +45,25 @@ function reviewStateKey(review: PendingReview): string {
     review.updated_at,
     getPendingInterrupts(review)?.map((interrupt) => interrupt.id),
   ]);
+}
+
+function reviewTimestamp(review: PendingReview, field: "updated_at" | "created_at"): number {
+  const raw = review[field];
+  if (!raw) return 0;
+  const t = Date.parse(raw);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function matchesQuery(review: PendingReview, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const haystacks = [
+    review.execution_id,
+    review.session_id ?? "",
+    review.suspend_reason ?? "",
+    JSON.stringify(review.suspend_context ?? {}),
+  ];
+  return haystacks.some((v) => v.toLowerCase().includes(q));
 }
 
 async function submitReview(
@@ -200,8 +222,7 @@ function ReviewCard({
               value={resumeMap}
             />
             <p className="text-xs text-muted-foreground">
-              Replace each null with an answer matching the response schema
-              above. Keep every interrupt ID as a top-level key.
+              Replace each null with an answer matching the response schema above. Keep every interrupt ID as a top-level key.
             </p>
           </>
         ) : (
@@ -247,6 +268,8 @@ export function Reviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resolvedReview, setResolvedReview] = useState<PendingReview | null>(null);
+  const [query, setQuery] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("updated_desc");
   const activeRequest = useRef<AbortController | null>(null);
 
   const loadReviews = useCallback(async (showLoading = false) => {
@@ -329,6 +352,25 @@ export function Reviews() {
     );
   }, []);
 
+  const visibleReviews = useMemo(() => {
+    const filtered = reviews.filter((review) => matchesQuery(review, query));
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      switch (sortMode) {
+        case "updated_asc":
+          return reviewTimestamp(a, "updated_at") - reviewTimestamp(b, "updated_at");
+        case "created_desc":
+          return reviewTimestamp(b, "created_at") - reviewTimestamp(a, "created_at");
+        case "created_asc":
+          return reviewTimestamp(a, "created_at") - reviewTimestamp(b, "created_at");
+        case "updated_desc":
+        default:
+          return reviewTimestamp(b, "updated_at") - reviewTimestamp(a, "updated_at");
+      }
+    });
+    return sorted;
+  }, [query, reviews, sortMode]);
+
   return (
     <main className="min-h-dvh bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
@@ -346,10 +388,10 @@ export function Reviews() {
                 <p className="mt-0.5 text-sm text-muted-foreground" aria-live="polite">
                   {loading && reviews.length === 0
                     ? "Checking for suspended executions…"
-                    : `${reviews.length} suspended execution${reviews.length === 1 ? "" : "s"} awaiting review.`}
+                    : `${visibleReviews.length} of ${reviews.length} suspended execution${reviews.length === 1 ? "" : "s"} shown.`}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Queue refreshes automatically. Submit a decision or continue an interrupt to resume the agent.
+                  Queue refreshes automatically when visible. Use search/sort to prioritize reviews and submit decisions to resume the agent.
                 </p>
               </div>
             </div>
@@ -368,6 +410,34 @@ export function Reviews() {
           </div>
         </header>
 
+        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border/50 bg-card/30 p-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="Search reviews"
+              className="pl-9"
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by reason, session, execution, or context..."
+              value={query}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <FilterIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+            <label className="sr-only" htmlFor="review-sort">Sort reviews</label>
+            <select
+              className="h-9 rounded-lg border bg-background px-3 text-sm"
+              id="review-sort"
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              value={sortMode}
+            >
+              <option value="updated_desc">Updated (newest)</option>
+              <option value="updated_asc">Updated (oldest)</option>
+              <option value="created_desc">Submitted (newest)</option>
+              <option value="created_asc">Submitted (oldest)</option>
+            </select>
+          </div>
+        </div>
+
         {error ? (
           <div className="mt-6 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
             {error}
@@ -375,18 +445,20 @@ export function Reviews() {
         ) : null}
 
         {resolvedReview ? (
-          <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm" role="status">
-            Review submitted.
+          <div className="mt-6 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm" role="status">
+            <p className="font-medium text-foreground">Review submitted successfully.</p>
+            <p className="mt-1 text-muted-foreground">
+              The execution will continue based on your input. It may take a moment to update.
+            </p>
             {resolvedReview.session_id ? (
-              <>
-                {" "}
+              <p className="mt-2">
                 <Link
                   className="font-medium text-primary underline"
                   href={`/?session_id=${encodeURIComponent(resolvedReview.session_id)}`}
                 >
                   View the resumed conversation
                 </Link>
-              </>
+              </p>
             ) : null}
           </div>
         ) : null}
@@ -407,8 +479,16 @@ export function Reviews() {
           </div>
         ) : null}
 
+        {!loading && !error && reviews.length > 0 && visibleReviews.length === 0 ? (
+          <div className="mt-8 rounded-xl border bg-card/30 p-8 text-center">
+            <h2 className="font-medium text-foreground">No reviews match your filters</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Try clearing the search or changing sort options.</p>
+            <Button className="mt-4" variant="outline" onClick={() => setQuery("")}>Clear search</Button>
+          </div>
+        ) : null}
+
         <div className="mt-6 space-y-4">
-          {reviews.map((review) => (
+          {visibleReviews.map((review) => (
             <ReviewCard
               key={reviewStateKey(review)}
               onResolved={handleResolved}
