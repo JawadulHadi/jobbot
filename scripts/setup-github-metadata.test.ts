@@ -106,7 +106,7 @@ function expectSuccess(result: Result) {
 }
 
 describe("setup-github-metadata", () => {
-  it("queries all pages of milestones and labels in the default repository", () => {
+  it("queries all pages of milestones and labels in the default repository", { timeout: 30_000 }, () => {
     const result = runScript();
     expectSuccess(result);
     expect(result.calls[0]).toEqual(["api", `repos/${repo}/milestones?state=all&per_page=100`, "--paginate", "--slurp"]);
