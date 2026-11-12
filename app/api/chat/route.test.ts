@@ -230,4 +230,25 @@ describe("POST /api/chat", () => {
     expect(body.session_id).toBeUndefined();
     expect(body.thread_id).toBeUndefined();
   });
+
+  it("returns a fallback message when the stream ends without content or suspension", async () => {
+    process.env.MONGODB_AGENTIC_API_URL = "http://localhost:3000/invoke/stream";
+    const upstream = new Response(
+      'data: {"chunk_type":"done","metadata":{"status":"completed"}}\n\n',
+      { headers: { "Content-Type": "text/event-stream" } }
+    );
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(upstream));
+
+    const response = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", parts: [{ type: "text", text: "Hi" }] }] }),
+      })
+    );
+
+    const body = await response.text();
+    expect(body).toContain("did not return a response");
+    expect(response.headers.get("X-Request-Id")).toBeTruthy();
+  });
 });
