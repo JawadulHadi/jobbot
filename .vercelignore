@@ -6,6 +6,6 @@ atlas-agent/
 # Local/generated
 .next/
 node_modules/
-.env
+#.env
 .env.local
 drizzle/meta/
