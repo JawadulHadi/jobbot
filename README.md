@@ -31,15 +31,17 @@ A branded Next.js chatbot and human-review UI for [Atlas Agent Engine](https://a
 
 2. **Configure environment**
    Copy `.env.example` to `.env.local` and set values (never commit secrets). See [`docs/ENV_AND_SECRETS.md`](docs/ENV_AND_SECRETS.md) for key definitions, GitHub secrets/variables sync, and deployment configuration.
+
    - `MONGODB_AGENTIC_API_URL` – workspace `.../invokeStream` URL, or local `http://localhost:<playground-port>/invoke/stream` from `agentengine dev up` (use the **playground UI** port).
    - `MONGODB_AGENTIC_CLIENT_ID` / `MONGODB_AGENTIC_CLIENT_SECRET` – required for deployed endpoints (service account with `AGENT_DEVELOPER`); leave blank for local proxy without auth.
    - Optional: `APP_BASIC_AUTH_USER` / `APP_BASIC_AUTH_PASSWORD` to protect the app when deployed (interim gate only).
-
 3. **Run locally**
-****
-   ```bash
+
+---
+
+```bash
    pnpm dev
-   ```
+```
 
    Open [http://localhost:3000](http://localhost:3000) (chat), [http://localhost:3000/reviews](http://localhost:3000/reviews), and [http://localhost:3000/api/health](http://localhost:3000/api/health).
 
@@ -90,12 +92,14 @@ See [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) and [`CONTRIBUTING.md`]
 **Best default for this Next.js app: [Vercel](https://vercel.com/)** — managed Node/edge-compatible hosting, first-class Next.js support, easy environment variable/secret management, preview deployments, HTTPS, and simple rollbacks. Use Vercel unless you have a specific need for self-hosting/containers.
 
 ### Vercel (recommended)
+
 1. Ensure code is merged/approved for release and CI is green on the target commit.
 2. Import/connect `JawadulHadi/jobbot` in Vercel.
 3. Configure environment variables/secrets (`MONGODB_AGENTIC_API_URL`, `MONGODB_AGENTIC_CLIENT_ID`, `MONGODB_AGENTIC_CLIENT_SECRET`, optional `APP_BASIC_AUTH_*`) in Vercel project settings (use `docs/ENV_AND_SECRETS.md` and `scripts/sync-github-env.ps1` for GitHub-side config where applicable).
 4. Deploy/redeploy with approval. Build: `pnpm build`, Install: `pnpm install`.
 
 ### Docker / self-hosted (portable alternative)
+
 - A production `Dockerfile` (standalone output) and `.dockerignore` are included.
 - Build: `docker build -t jobbot .`
 - Run: `docker run --rm -p 3000:3000 -e MONGODB_AGENTIC_API_URL=... -e MONGODB_AGENTIC_CLIENT_ID=... -e MONGODB_AGENTIC_CLIENT_SECRET=... jobbot`
@@ -115,6 +119,21 @@ The UI sends messages to `/api/chat`, which forwards them to the Atlas Agent Eng
 
 ## Repository
 
-- **Origin:** <https://github.com/JawadulHadi/jobbot.git>
+- **Origin:** [https://github.com/JawadulHadi/jobbot.git](https://github.com/JawadulHadi/jobbot.git)
 - **Description/topics/milestones/labels/tags:** see [`docs/REPOSITORY_METADATA.md`](docs/REPOSITORY_METADATA.md) (apply via GitHub with approval)
 - **Current local note:** working changes and git reconciliation may be required before branching/PR/tag actions; see [`RELEASE_NOTES.md`](RELEASE_NOTES.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+<div align="center">
+
+**Let's build something resilient together.**
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-0A0A0A?style=flat-square&logo=vercel&logoColor=white)](https://juhbukhari.vercel.app)
+[![Résumé](https://img.shields.io/badge/Résumé-4B5563?style=flat-square&logo=adobeacrobatreader&logoColor=white)](https://juhbukhari.vercel.app/resume.pdf)
+[![Case Study](https://img.shields.io/badge/Case_Study-7C3AED?style=flat-square&logo=readthedocs&logoColor=white)](https://juhbukhari.vercel.app/case-study)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/jawad-ul-hadi)
+[![GitLab](https://img.shields.io/badge/GitLab-FC6D26?style=flat-square&logo=gitlab&logoColor=white)](https://gitlab.com/JawadulHadi)
+[![Stack Overflow](https://img.shields.io/badge/Stack_Overflow-F58025?style=flat-square&logo=stackoverflow&logoColor=white)](https://stackoverflow.com/users/19086162/jawad-ul-hadi)
+[![ORCID](https://img.shields.io/badge/ORCID-A6CE39?style=flat-square&logo=orcid&logoColor=white)](https://orcid.org/0009-0007-1317-4615)
+[![Book a call](https://img.shields.io/badge/Book_a_call-006BFF?style=flat-square&logo=calendly&logoColor=white)](https://calendly.com/jawadulhadicc)
+[![Email](https://img.shields.io/badge/Email-EA4335?style=flat-square&logo=gmail&logoColor=white)](mailto:jawadulhadicc@gmail.com?subject=Hello%20Jawad&body=Hi%20Jawad%2C%0A%0AI%20came%20across%20your%20profile.)
+</div>
