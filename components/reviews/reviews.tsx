@@ -183,7 +183,7 @@ function ReviewCard({
   };
 
   return (
-    <article className="rounded-xl border bg-card p-5 shadow-[var(--shadow-card)]">
+    <article className="rounded-2xl glass p-5 md:p-6 shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-semibold">
@@ -207,24 +207,24 @@ function ReviewCard({
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
         {review.session_id ? (
-          <div>
+          <div className="glass-subtle rounded-xl p-3">
             <dt className="text-xs text-muted-foreground">Session</dt>
             <dd className="mt-1 break-all font-mono text-xs">{review.session_id}</dd>
           </div>
         ) : null}
         {review.created_at ? (
-          <div>
+          <div className="glass-subtle rounded-xl p-3">
             <dt className="text-xs text-muted-foreground">Created</dt>
             <dd className="mt-1">{new Date(review.created_at).toLocaleString()}</dd>
           </div>
         ) : null}
         {review.updated_at ? (
-          <div>
+          <div className="glass-subtle rounded-xl p-3">
             <dt className="text-xs text-muted-foreground">Updated</dt>
             <dd className="mt-1">{new Date(review.updated_at).toLocaleString()}</dd>
           </div>
         ) : null}
-        <div>
+        <div className="glass-subtle rounded-xl p-3">
           <dt className="text-xs text-muted-foreground">Audit</dt>
           <dd className="mt-1 text-xs text-muted-foreground">
             Status: suspended
@@ -234,7 +234,7 @@ function ReviewCard({
       </dl>
 
       {contextEntries(review).length > 0 ? (
-        <div className="mt-4 rounded-lg bg-muted/50 p-3">
+        <div className="mt-4 rounded-xl glass-subtle p-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Context
           </h3>
@@ -266,12 +266,12 @@ function ReviewCard({
               Resume map
             </label>
             <textarea
-              className="min-h-36 w-full rounded-lg border bg-background p-3 font-mono text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="min-h-36 w-full rounded-xl glass-subtle p-3 font-mono text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id={`resume-${review.execution_id}`}
               onChange={(event) => setResumeMap(event.target.value)}
               spellCheck={false}
               value={resumeMap}
-            />
+            />
             <p className="text-xs text-muted-foreground">
               Replace each null with an answer matching the response schema above. Keep every interrupt ID as a top-level key.
             </p>
@@ -282,11 +282,11 @@ function ReviewCard({
               Decision
             </label>
             <select
-              className="h-9 w-full rounded-lg border bg-background px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="h-10 w-full rounded-xl glass-subtle px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id={`decision-${review.execution_id}`}
               onChange={(event) => setDecision(event.target.value)}
               value={decision}
-            >
+            >
               {allowedDecisions(review).map((option) => (
                 <option key={option} value={option}>
                   {option.replaceAll("_", " ")}
@@ -297,15 +297,15 @@ function ReviewCard({
               Reviewer notes <span className="font-normal text-muted-foreground">(optional)</span>
             </label>
             <textarea
-              className="min-h-24 w-full rounded-lg border bg-background p-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="min-h-24 w-full rounded-xl glass-subtle p-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id={`notes-${review.execution_id}`}
               onChange={(event) => setNotes(event.target.value)}
               value={notes}
-            />
+            />
           </>
         )}
 
-        {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
+        {error ? <p className="text-sm text-destructive" role="alert" aria-live="assertive">{error}</p> : null}
         <Button disabled={submitting} onClick={() => void handleSubmit()}>
           {submitting ? "Submitting…" : interrupts ? "Continue execution" : "Submit decision"}
         </Button>
@@ -484,18 +484,18 @@ export function Reviews() {
   }, [query, reviews, sortMode]);
 
   return (
-    <main id="main-content" className="min-h-dvh bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 pb-6">
+    <main id="main-content" className="min-h-dvh bg-transparent px-4 py-6 md:py-8">
+      <div className="mx-auto max-w-4xl space-y-4">
+        <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl glass-strong p-5 md:p-6">
           <div>
             <Link
-              className="inline-flex items-center rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="inline-flex items-center rounded-full glass px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               href="/"
             >
               ← Back to chat
             </Link>
             <div className="mt-4 flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand)]/25 to-[var(--brand)]/5 text-[var(--brand)] ring-1 ring-[var(--brand)]/25 shadow-sm">
                 <ShieldCheckIcon className="size-5" aria-hidden="true" />
               </div>
               <div>
@@ -528,7 +528,7 @@ export function Reviews() {
           </div>
         </header>
 
-        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border/50 bg-card/30 p-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 rounded-2xl glass p-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -543,11 +543,11 @@ export function Reviews() {
             <FilterIcon className="size-4 text-muted-foreground" aria-hidden="true" />
             <label className="sr-only" htmlFor="review-sort">Sort reviews</label>
             <select
-              className="h-9 rounded-lg border bg-background px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="h-10 rounded-xl glass-subtle px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               id="review-sort"
               onChange={(e) => setSortMode(e.target.value as SortMode)}
               value={sortMode}
-            >
+            >
               <option value="waiting_desc">Waiting (longest first)</option>
               <option value="waiting_asc">Waiting (newest first)</option>
               <option value="updated_desc">Updated (newest)</option>
@@ -559,13 +559,13 @@ export function Reviews() {
         </div>
 
         {error ? (
-          <div className="mt-6 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive backdrop-blur-md" role="alert" aria-live="assertive">
             {error}
           </div>
         ) : null}
 
         {resolvedReview ? (
-          <div className="mt-6 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm" role="status">
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm backdrop-blur-md" role="status">
             <p className="font-medium text-foreground">Review submitted successfully.</p>
             <p className="mt-1 text-muted-foreground">
               The execution will continue based on your input. It may take a moment to update.
@@ -573,7 +573,7 @@ export function Reviews() {
             {resolvedReview.session_id ? (
               <p className="mt-2">
                 <Link
-                  className="rounded-sm font-medium text-primary underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="rounded-sm font-medium text-[var(--brand)] underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   href={`/?session_id=${encodeURIComponent(resolvedReview.session_id)}`}
                 >
                   View the resumed conversation
@@ -584,14 +584,14 @@ export function Reviews() {
         ) : null}
 
         {recentOutcomes.length > 0 ? (
-          <section aria-label="Recent review outcomes" className="mt-6 rounded-xl border border-border/60 bg-card/40 p-4">
+          <section aria-label="Recent review outcomes" className="rounded-2xl glass p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-foreground">Recent outcomes (this session)</h2>
               <span className="text-xs text-muted-foreground">{recentOutcomes.length} tracked</span>
             </div>
             <ul className="mt-3 space-y-2">
               {recentOutcomes.map((outcome) => (
-                <li key={`${outcome.execution_id}-${outcome.at}`} className="rounded-lg border bg-background/60 p-3 text-sm">
+                <li key={`${outcome.execution_id}-${outcome.at}`} className="rounded-xl glass-subtle p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium text-foreground">{outcome.action}</p>
                     <time className="text-xs text-muted-foreground" dateTime={outcome.at}>
@@ -616,9 +616,9 @@ export function Reviews() {
         ) : null}
 
         {!loading && !error && reviews.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-dashed border-border/70 bg-card/30 p-10 text-center">
-            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
-              <ShieldCheckIcon className="size-6" aria-hidden="true" />
+          <div className="rounded-2xl glass p-10 text-center">
+            <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand)]/20 to-[var(--brand)]/5 text-[var(--brand)] ring-1 ring-[var(--brand)]/25">
+              <ShieldCheckIcon className="size-7" aria-hidden="true" />
             </div>
             <h2 className="font-medium text-foreground">No pending reviews</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -628,15 +628,15 @@ export function Reviews() {
         ) : null}
 
         {!loading && !error && reviews.length > 0 && visibleReviews.length === 0 ? (
-          <div className="mt-8 rounded-xl border bg-card/30 p-8 text-center">
+          <div className="rounded-2xl glass p-8 text-center">
             <h2 className="font-medium text-foreground">No reviews match your filters</h2>
             <p className="mt-1 text-sm text-muted-foreground">Try clearing the search or changing sort options.</p>
             <Button className="mt-4" variant="outline" onClick={() => setQuery("")}>Clear search</Button>
           </div>
-        ) : null}
+        ) : null}
 
-        <div className="mt-6 space-y-4">
-          {visibleReviews.map((review) => (
+        <div className="space-y-4">
+          {visibleReviews.map((review) => (
             <ReviewCard
               key={reviewStateKey(review)}
               onResolved={handleResolved}

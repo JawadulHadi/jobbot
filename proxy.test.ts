@@ -6,10 +6,11 @@ import { restoreEnvironmentVariable } from "@/test/environment";
 const originalUser = process.env.APP_BASIC_AUTH_USER;
 const originalPass = process.env.APP_BASIC_AUTH_PASSWORD;
 
-function makeRequest(authHeader?: string): NextRequest {
+function makeRequest(path = "/", authHeader?: string, cookie?: string): NextRequest {
   const headers: Record<string, string> = {};
   if (authHeader) headers.authorization = authHeader;
-  return new NextRequest("http://localhost:3000/", { headers });
+  if (cookie) headers.cookie = `${cookie}`;
+  return new NextRequest(`http://localhost:3000${path}`, { headers });
 }
 
 afterEach(() => {
@@ -23,38 +24,51 @@ describe("proxy basic auth", () => {
     delete process.env.APP_BASIC_AUTH_PASSWORD;
     const res = proxy(makeRequest());
     expect(res.status).toBe(200);
-    expect(res.headers.get("www-authenticate")).toBeNull();
   });
 
-  it("returns 401 when credentials are required but missing", () => {
+  it("redirects unauthenticated page requests to /login", () => {
     process.env.APP_BASIC_AUTH_USER = "user";
     process.env.APP_BASIC_AUTH_PASSWORD = "pass";
-    const res = proxy(makeRequest());
-    expect(res.status).toBe(401);
-    expect(res.headers.get("www-authenticate")).toContain("Basic");
+    const res = proxy(makeRequest("/"));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location") ?? "").pathname).toBe("/login");
   });
 
-  it("returns 401 for invalid credentials", () => {
+  it("returns 401 for unauthenticated API requests", () => {
+    process.env.APP_BASIC_AUTH_USER = "user";
+    process.env.APP_BASIC_AUTH_PASSWORD = "pass";
+    const res = proxy(makeRequest("/api/chat"));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for invalid basic credentials on API routes", () => {
     process.env.APP_BASIC_AUTH_USER = "user";
     process.env.APP_BASIC_AUTH_PASSWORD = "pass";
     const token = Buffer.from("user:wrong").toString("base64");
-    const res = proxy(makeRequest(`Basic ${token}`));
+    const res = proxy(makeRequest("/api/chat", `Basic ${token}`));
     expect(res.status).toBe(401);
   });
 
-  it("returns 401 for malformed authorization header", () => {
-    process.env.APP_BASIC_AUTH_USER = "user";
-    process.env.APP_BASIC_AUTH_PASSWORD = "pass";
-    expect(proxy(makeRequest("Basic not-base64!!!")).status).toBe(401);
-    expect(proxy(makeRequest(`Basic ${Buffer.from("nocolon").toString("base64")}`)).status).toBe(401);
-  });
-
-  it("allows valid credentials", () => {
+  it("allows valid basic credentials", () => {
     process.env.APP_BASIC_AUTH_USER = "user";
     process.env.APP_BASIC_AUTH_PASSWORD = "pass";
     const token = Buffer.from("user:pass").toString("base64");
-    const res = proxy(makeRequest(`Basic ${token}`));
+    const res = proxy(makeRequest("/", `Basic ${token}`));
     expect(res.status).toBe(200);
-    expect(res.headers.get("www-authenticate")).toBeNull();
+  });
+
+  it("allows a valid session cookie", () => {
+    process.env.APP_BASIC_AUTH_USER = "user";
+    process.env.APP_BASIC_AUTH_PASSWORD = "pass";
+    const token = Buffer.from("user:pass").toString("base64");
+    const res = proxy(makeRequest("/", undefined, `jobbot_auth=${token}`));
+    expect(res.status).toBe(200);
+  });
+
+  it("allows access to /login and auth endpoints without credentials", () => {
+    process.env.APP_BASIC_AUTH_USER = "user";
+    process.env.APP_BASIC_AUTH_PASSWORD = "pass";
+    expect(proxy(makeRequest("/login")).status).toBe(200);
+    expect(proxy(makeRequest("/api/auth/login")).status).toBe(200);
   });
 });

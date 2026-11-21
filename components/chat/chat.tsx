@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   CHAT_SESSION_STORAGE_KEY,
   SUSPENDED_CHAT_RESPONSE,
+  recordSessionHistory,
   isSafeSessionId,
   type ChatHistory,
 } from "@/lib/session";
@@ -26,6 +27,7 @@ type SessionProgress = "suspended" | "resuming" | null;
 function persistSessionId(sessionId: string) {
   try {
     window.localStorage.setItem(CHAT_SESSION_STORAGE_KEY, sessionId);
+    recordSessionHistory(sessionId);
   } catch {
     // Browsers may disable storage. The active tab still keeps the session.
   }
@@ -382,41 +384,52 @@ export function Chat() {
     isRestoring || progress !== null || sessionChanged;
 
   return (
-    <div className="flex h-dvh w-full flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-3">
+    <div className="flex h-dvh w-full flex-col bg-transparent">
+      <header className="sticky top-0 z-20 mx-2 mt-2 rounded-2xl glass-strong md:mx-4 md:mt-3">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-3 md:px-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand)] text-[var(--brand-foreground)] shadow-sm ring-1 ring-black/5 dark:ring-white/10">
-                <BotIcon className="size-5" aria-hidden="true" />
+              <div className="relative flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand)] to-[oklch(from_var(--brand)_l_c_h_/_0.7)] text-[var(--brand-foreground)] shadow-[0_8px_24px_-8px_oklch(from_var(--brand)_l_c_h_/_0.6)] ring-1 ring-white/30 dark:ring-white/10">
+                <div className="absolute inset-0 rounded-2xl bg-white/20 blur-sm" aria-hidden="true" />
+                <BotIcon className="relative size-5" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm font-semibold tracking-tight text-foreground">
+                <h1 className="text-base font-semibold tracking-tight text-foreground">
                   Jobbot
                 </h1>
                 <p className="truncate text-xs text-muted-foreground">
-                  AI assistant with human review, powered by Atlas Agent Engine
+                  Glass-mode AI assistant with human review · Atlas Agent Engine
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs font-medium text-foreground/90 transition-all hover:bg-[var(--glass-bg-strong)] hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 href="/reviews"
               >
                 <ShieldCheckIcon className="size-3.5 text-[var(--brand)]" aria-hidden="true" />
                 Reviews
               </Link>
+              <button
+                className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs font-medium text-foreground/90 transition-all hover:bg-[var(--glass-bg-strong)] hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                onClick={async () => {
+                  await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+                  window.location.href = "/login";
+                }}
+                type="button"
+              >
+                Sign out
+              </button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/40 bg-card/40 px-3 py-2">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl glass-subtle px-3 py-2.5">
             <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor="user-id">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap" htmlFor="user-id">
                 User
               </label>
               <Input
-                className="h-8 w-36 text-xs bg-background/60"
+                className="h-8 w-36 text-xs"
                 id="user-id"
                 onChange={(e) => setUserId(e.target.value)}
                 value={userId}
@@ -431,13 +444,13 @@ export function Chat() {
                 <DicesIcon className="size-3.5" aria-hidden="true" />
               </Button>
             </div>
-            <div className="h-4 w-px bg-border/60 hidden sm:block" aria-hidden="true" />
+            <div className="h-5 w-px bg-border/70 hidden sm:block" aria-hidden="true" />
             <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor="session-id">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap" htmlFor="session-id">
                 Session
               </label>
               <Input
-                className="h-8 w-52 text-xs font-mono bg-background/60"
+                className="h-8 w-52 text-xs font-mono"
                 id="session-id"
                 onBlur={applySessionInput}
                 onChange={(event) => {
@@ -461,7 +474,7 @@ export function Chat() {
             </div>
           </div>
         </div>
-      </header>
+      </header>
       <Messages
         emptyState={
           isRestoring
@@ -473,11 +486,11 @@ export function Chat() {
         messages={messages}
         status={status}
       />
-      <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
-        <div className="w-full">
+      <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-3 pb-4 pt-2 md:px-4 md:pb-5">
+        <div className="w-full rounded-2xl glass-strong p-2.5 md:p-3">
           {configNotice ? (
             <div
-              className="mb-2 rounded-xl border border-[var(--brand)]/20 bg-[var(--brand)]/5 px-3 py-2 text-sm text-foreground"
+              className="mb-2 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand)]/10 px-3 py-2 text-sm text-foreground backdrop-blur-md"
               role="status"
               aria-live="polite"
             >
@@ -490,7 +503,7 @@ export function Chat() {
             </div>
           ) : null}
           {historyError ? (
-            <p className="mb-2 text-sm text-destructive" role="alert">
+            <p className="mb-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert" aria-live="assertive">
               {historyError}
             </p>
           ) : null}
@@ -508,7 +521,7 @@ export function Chat() {
             stop={stop}
           />
         </div>
-      </div>
+      </div>
     </div>
   );
 }

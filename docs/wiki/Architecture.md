@@ -1,4 +1,4 @@
-# Architecture (High-level)
+# Architecture
 
 ## Stack
 - **Framework:** Next.js (App Router), React, TypeScript

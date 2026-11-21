@@ -1,9 +1,10 @@
 import { Chat } from "@/components/chat/chat";
+import { AppShell } from "@/components/layout/app-shell";
 
 export default function Home() {
   return (
-    <main id="main-content" className="flex min-h-dvh flex-col">
+    <AppShell>
       <Chat />
-    </main>
+    </AppShell>
   );
 }

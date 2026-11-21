@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -20,6 +20,21 @@ export const metadata: Metadata = {
   description:
     "Jobbot is an AI assistant with human-in-the-loop reviews, powered by Atlas Agent Engine.",
   applicationName: "Jobbot",
+  openGraph: {
+    title: "Jobbot",
+    description:
+      "Jobbot is an AI assistant with human-in-the-loop reviews, powered by Atlas Agent Engine.",
+    siteName: "Jobbot",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4efe6" },
+    { media: "(prefers-color-scheme: dark)", color: "#2a241f" },
+  ],
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({

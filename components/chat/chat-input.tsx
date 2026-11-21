@@ -51,10 +51,10 @@ export function ChatInput({
         }
       }}
     >
-      <div className="overflow-hidden rounded-2xl border border-border/30 bg-card/70 shadow-[var(--shadow-composer)] transition-shadow duration-300 focus-within:shadow-[var(--shadow-composer-focus)]">
+      <div className="overflow-hidden rounded-2xl glass-subtle transition-all duration-300 focus-within:shadow-[var(--shadow-composer-focus)] focus-within:border-[var(--ring)]/40">
         <textarea
           aria-label="Message"
-          className="field-sizing-content max-h-48 min-h-24 w-full resize-none border-0 bg-transparent px-4 pt-3.5 pb-1.5 text-[13px] leading-relaxed outline-none placeholder:text-muted-foreground/35"
+          className="field-sizing-content max-h-48 min-h-24 w-full resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-[14px] leading-relaxed outline-none placeholder:text-muted-foreground/45"
           disabled={disabled}
           onChange={(e) => setInput(e.target.value)}
           onCompositionEnd={() => setIsComposing(false)}
@@ -70,11 +70,11 @@ export function ChatInput({
           ref={textareaRef}
           value={input}
         />
-        <div className="flex items-center justify-end px-3 pb-3">
+        <div className="flex items-center justify-end px-3 pb-3 pt-1">
           {status === "submitted" || status === "streaming" ? (
             <Button
               aria-label="Stop generating"
-              className="h-7 w-7 rounded-xl bg-foreground p-1 text-background transition-all duration-200 hover:opacity-85 active:scale-95"
+              className="h-8 w-8 rounded-xl bg-[var(--brand)] p-1 text-[var(--brand-foreground)] shadow-[0_6px_16px_-6px_oklch(from_var(--brand)_l_c_h_/_0.7)] transition-all duration-200 hover:brightness-110 active:scale-95"
               onClick={(e) => {
                 e.preventDefault();
                 stop();
@@ -87,10 +87,10 @@ export function ChatInput({
             <button
               aria-label="Send message"
               className={cn(
-                "inline-flex h-7 w-7 items-center justify-center rounded-xl transition-all duration-200 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                "inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                 input.trim() && !disabled
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-95"
-                  : "bg-muted text-muted-foreground/25 cursor-not-allowed"
+                  ? "bg-[var(--brand)] text-[var(--brand-foreground)] shadow-[0_6px_16px_-6px_oklch(from_var(--brand)_l_c_h_/_0.7)] hover:brightness-110 active:scale-95"
+                  : "bg-muted/50 text-muted-foreground/40 cursor-not-allowed border border-border/40"
               )}
               disabled={disabled || !input.trim()}
               type="submit"
@@ -100,6 +100,6 @@ export function ChatInput({
           )}
         </div>
       </div>
-    </form>
+    </form>
   );
 }

@@ -62,14 +62,15 @@ export const PreviewMessage = ({
     return (
       <div
         className={cn(
-          "flex min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm text-foreground text-[13px] leading-[1.65]",
+          "flex min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm text-foreground text-[13px] leading-[1.7]",
           isUser &&
-            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-2xl rounded-br-lg border border-border/30 bg-gradient-to-br from-secondary to-muted px-3.5 py-2 shadow-[var(--shadow-card)]"
+            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-2xl rounded-br-md glass-strong px-4 py-2.5",
+          isAssistant && "rounded-2xl glass-subtle px-4 py-3"
         )}
         key={`message-${message.id}-part-${index}`}
       >
         <MarkdownResponse>{sanitizeText(part.text)}</MarkdownResponse>
-      </div>
+      </div>
     );
   });
 
@@ -97,12 +98,12 @@ export const PreviewMessage = ({
         )}
       >
         {isAssistant && (
-          <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
-              <SparklesIcon size={13} />
+          <div className="flex h-[calc(13px*1.7)] shrink-0 items-center pt-2">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand)]/25 to-[var(--brand)]/5 text-[var(--brand)] ring-1 ring-[var(--brand)]/25 shadow-sm">
+              <SparklesIcon size={14} />
             </div>
           </div>
-        )}
+        )}
         {isAssistant ? (
           <div className="flex min-w-0 flex-1 flex-col gap-2">{content}</div>
         ) : (
@@ -116,16 +117,16 @@ export const PreviewMessage = ({
 export const ThinkingMessage = () => (
   <div className="group/message w-full" data-role="assistant">
     <div className="flex items-start gap-3">
-      <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]/20">
-          <SparklesIcon size={13} />
+      <div className="flex h-[calc(13px*1.7)] shrink-0 items-center pt-2">
+        <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand)]/25 to-[var(--brand)]/5 text-[var(--brand)] ring-1 ring-[var(--brand)]/25 shadow-sm">
+          <SparklesIcon size={14} />
         </div>
       </div>
-      <div className="flex h-[calc(13px*1.65)] items-center text-[13px] leading-[1.65]">
+      <div className="glass-subtle rounded-2xl px-4 py-3 flex h-[calc(13px*1.7+1.5rem)] items-center text-[13px] leading-[1.7]">
         <Shimmer className="font-medium" duration={1}>
           Thinking...
         </Shimmer>
       </div>
     </div>
   </div>
-);
+);

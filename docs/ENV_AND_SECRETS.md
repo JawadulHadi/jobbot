@@ -14,6 +14,7 @@ This document defines required/optional environment configuration for Jobbot and
 | `APP_BASIC_AUTH_USER` | Secret | Optional | Interim HTTP Basic Auth username (set together with password) |
 | `APP_BASIC_AUTH_PASSWORD` | Secret | Optional | Interim HTTP Basic Auth password (interim gate only; not full authz) |
 | `OPENAI_API_KEY` | Secret | Optional | Only if your agent/runtime requires it (e.g. local agent dev); not used by the Next.js app runtime directly |
+| `DATABASE_URL` | Secret | Optional (Phase C) | Postgres connection string for persisted session metadata and review audit; when unset the app runs in degraded mode |
 
 ## Local development
 

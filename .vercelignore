@@ -1,0 +1,11 @@
+# Exclude the Python Atlas Agent from Vercel builds (deployed separately).
+atlas-agent/
+**/__pycache__/
+**/*.py
+
+# Local/generated
+.next/
+node_modules/
+.env
+.env.local
+drizzle/meta/
